@@ -1,0 +1,428 @@
+#!/usr/bin/python3
+# -*- coding:utf-8 -*-
+# Author: yizr
+
+from ast import Try
+import os
+import sys
+
+__abs_file__ = os.path.abspath(__file__)
+mig_dir = os.path.dirname(__abs_file__)
+tool_dir = os.path.dirname(mig_dir)
+code_dir = os.path.dirname(tool_dir)
+sys.path.append(code_dir)
+
+import re
+import importlib
+import importlib.util
+
+import argparse
+from typing import Optional
+import inspect
+from pathlib import Path
+
+# from lib.yom import DDL, Model
+
+# from lib import dbutil as db
+from tools.migrate.rake_migrate import RakeMigrate as Migrate
+
+
+def get_current_path():
+    # __abs_file__ = os.path.abspath(__file__)
+    # __cur_path__ = os.path.dirname(__abs_file__)
+    __cur_path__ = os.getcwd()
+    return __cur_path__
+
+
+def dir_file(path):
+    pathDir = os.listdir(path)
+    return pathDir
+
+
+# 下划线[num]_.py结尾
+def is_name_numberd(name):
+    regx = r'^([0-9]+)(_)(.*)(\.py)$'
+    ma = re.match(regx, name)
+    return True if ma else False
+
+
+def parse_number(name):
+    regx = r'^([0-9]+)(_)(.*)(\.py)$'
+    ma = re.match(regx, name)
+    if ma:
+        return int(ma.group(1))
+
+
+def parse_module_name(file_name):
+    regx = r'^(.*)(\.py)$'
+    ma = re.match(regx, file_name)
+    if not ma:
+        return None
+
+    return ma.group(1)
+
+
+def _sort_(list_names):
+    return sorted(list_names, key=lambda n: parse_number(n))
+
+
+def list_all_migration_files(path):
+    files = dir_file(path)
+    migs = list(filter(lambda f: is_name_numberd(f), files))
+    return migs
+
+
+def check_module(module_name):
+    """
+    Checks if module can be imported without actually
+    importing it
+    """
+    module_spec = importlib.util.find_spec(module_name)
+    if module_spec is None:
+        print("Module: {} not found".format(module_name))
+        return None
+    else:
+        print("Module: {} can be imported".format(module_name))
+        return module_spec
+
+
+def import_module_from_spec(module_spec):
+    """
+    Import the module via the passed in module specification
+    Returns the newly imported module
+    """
+    module = importlib.util.module_from_spec(module_spec)
+    module_spec.loader.exec_module(module)
+    return module
+
+
+def loader(mdl_name):
+    module_spec = check_module(mdl_name)
+    if module_spec:
+        module = import_module_from_spec(module_spec)
+        return module
+    return None
+    # return importlib.reload(mdl_name)
+
+
+def list_all_klass(module):
+    if type(module) == str:
+        module = loader(module)
+    klass = []
+    for name in dir(module):
+        var = getattr(module, name)
+        if isinstance(var, type):
+            klass.append(name)
+    return klass
+
+
+def is_child_of(obj, cls):
+    try:
+        for i in obj.__bases__:
+            if i is cls or isinstance(i, cls):
+                return True
+        for i in obj.__bases__:
+            if is_child_of(i, cls):
+                return True
+    except AttributeError:
+        return is_child_of(obj.__class__, cls)
+    return False
+
+
+def get_all_klass_type_in(module, klass=None):
+    if type(module) == str:
+        module = loader(module)
+
+    if not klass:
+        klass = type
+    klasses = []
+    for name in dir(module):
+        var = getattr(module, name)
+        if is_child_of(var, klass):
+            klasses.append(var)
+
+    return klasses
+
+
+def max_number(path=None):
+    if path is None:
+        path = get_current_path()
+
+    childs = list_all_migration_files(path)
+    if len(childs) > 0:
+        sorted_childs = _sort_(childs)
+        num = parse_number(sorted_childs[-1])
+        return num
+
+    return 0
+
+
+def change_to_camel(name, sep='_'):
+    string_list = str(name).split(sep)  # 将字符串转化为list
+    first = string_list[0].lower()
+    others = string_list[1:]
+
+    # str.capitalize():将字符串的首字母转化为大写
+    others_capital = [word.capitalize() for word in others]
+
+    others_capital[0:0] = [first]
+
+    # 将list组合成为字符串，中间无连接符。
+    hump_string = ''.join(others_capital)
+    return hump_string
+
+
+# 包含下划线则认为是
+def is_slash_name(name):
+    return '_' in name
+
+
+def change_to_slash_name(name):
+    if is_slash_name(name):
+        return name.lower()
+
+    listx = name[0:len(name)]
+    listy = listx[0]
+    for i in range(1, len(listx) - 1):
+        # listx[i] 直接copy 或 先加'_'再copy
+        if listx[i].isupper(
+        ) and not listx[i - 1].isupper():  # 加'_',当前为大写，前一个字母为小写
+            listy += '_'
+            listy += listx[i]
+        elif listx[i].isupper() and listx[i -
+                                          1].isupper() and listx[i +
+                                                                 1].islower():
+            # 加'_',当前为大写，前一个字母为小写
+            listy += '_'
+            listy += listx[i]
+        else:
+            listy += listx[i]
+
+    listy += listx[len(listx) - 1]
+    return listy.lower()
+
+
+def generate_file(name='migrate_task', path=None):
+    if not path:
+        path = get_current_path()
+
+    slash_name = change_to_slash_name(name)
+    
+    numbered_name = '%d_%s.py' % (max_number(path) + 1, slash_name)
+
+    full_path = os.path.sep.join([path, numbered_name])
+
+    with open(full_path, 'w') as f:
+        tmps = """#!/usr/bin/python3
+# -*- coding:utf-8 -*-
+# Author: yizr
+
+import os
+import sys
+
+__abs_file__ = os.path.abspath(__file__)
+mig_dir = os.path.dirname(__abs_file__)
+tool_dir = os.path.dirname(mig_dir)
+code_dir = os.path.dirname(tool_dir)
+sys.path.append(code_dir)
+
+from tools.migrate.rake_migrate import RakeMigrate
+
+import pymysql
+from conf import db
+
+import www.dao.field_desc as fd
+
+
+class %s(RakeMigrate):
+    def __init__(self):
+        super().__init__()
+        self.db_conn = self._get_connection()
+
+    def _get_connection(self):
+        db_conn = pymysql.connect(host=db.rec_db.get('host'),
+                                       user=db.rec_db.get('user'),
+                                       password=db.rec_db.get('password'),
+                                       database=db.rec_db.get('db'))
+        return db_conn
+
+    def up(self):
+        self.create_table('%s',*columns, fd.UpdatedAtField(), fd.CreatedAtField())
+
+    def down(self):
+        self.drop('%s')
+"""
+        class_name = change_to_camel(slash_name)
+        tmps = tmps % (class_name, slash_name, slash_name)
+        f.write(tmps)
+
+
+def run_one_migrate(f):
+    mdl = loader(parse_module_name(f))
+    klasss = get_all_klass_type_in(mdl, Migrate)
+    for k in klasss:
+        obj = k()
+        obj.down()
+        obj.up()
+
+
+def run_migrate(path=None):
+    if path is None:
+        path = get_current_path()
+
+    childs = list_all_migration_files(path)
+    sorted_childs = _sort_(childs)
+    for f in sorted_childs:
+        # print("f:",f)
+        run_one_migrate(f)
+
+
+def run_one_rollback(f):
+    mdl = loader(parse_module_name(f))
+    klasss = get_all_klass_type_in(mdl, Migrate)
+    for k in klasss:
+        obj = k()
+        obj.down()
+
+
+def run_rollback(path=None):
+    if path is None:
+        path = get_current_path()
+
+    childs = list_all_migration_files(path)
+    sorted_childs = _sort_(childs)
+    for f in reversed(sorted_childs):
+        run_one_rollback(f)
+
+
+def print_usage():
+    print('usage python rake.py [cmd]')
+    print('[cmd]:')
+    print('     g: generate content eg: g create_table_risk_order')
+    print('     m: excute all migration by order. [-i no] migrate one table with no. eg: m  or m ./ or m 2')
+    print('     r: rollback by desc order or only a table with no. eg: r or r ./ or r 2')
+
+
+def print_args(args: Optional[dict] = None, show_file=True, show_fcn=False):
+    # Print function arguments (optional args dict)
+    x = inspect.currentframe().f_back  # previous frame
+    file, _, fcn, _, _ = inspect.getframeinfo(x)
+    if args is None:  # get args automatically
+        args, _, _, frm = inspect.getargvalues(x)
+        args = {k: v for k, v in frm.items() if k in args}
+    s = (f'{Path(file).stem}: ' if show_file else '') + (f'{fcn}: ' if show_fcn else '')
+    print(s + ', '.join(f'{k}={v}' for k, v in args.items()))
+
+def parse_opt():
+    parser = argparse.ArgumentParser()
+    parser.add_argument('--g', nargs=1, type=str, help='g: generate content eg: g create_table_risk_order')
+    parser.add_argument('--m', nargs='*', type=str, default=None, help='excute all migration by order. [-no] migrate one table with no.')
+    parser.add_argument('--r', nargs='*', type=str, default=None, help='rollback by desc order or tables with no.')
+    parser.add_argument('--path', nargs='+', type=str, default='./', help='path. defualt current dir.')
+    opt = parser.parse_args()
+    print_args(vars(opt))
+    return opt
+
+def _find_by_no(no,path):
+    if path is None:
+        path = get_current_path()
+
+    childs = list_all_migration_files(path)
+    sorted_childs = _sort_(childs)
+
+    for c in sorted_childs:
+        if c.startswith(str(no)):
+            return c
+    
+    # 未找到则不做处理
+    return no
+
+
+def _rm_arg_to_fname(arg,path):
+    if arg.isdigit():
+        name = _find_by_no(arg,path)
+
+    f = name  
+    if not name.endswith('.py'):
+        f = name +'.py'
+    print('f:',f)
+
+    if not is_name_numberd(f):
+        print(f'Warning:{name} is not a number started name.'.format(name))
+
+    return f
+
+def handle_m_cmd(m, path):
+    print('m:',m,' path:',path)
+    # excute all migration by order. [-no] migrate one table with no.
+    if len(m) == 0:
+        # default
+        run_migrate(path=path)
+        return
+
+    for m_arg in m:
+        f = _rm_arg_to_fname(m_arg,path)
+        try:
+            run_one_migrate(f)
+        except Exception as e:
+            print("err:",e)
+
+
+def handle_r_cmd(r,path):
+    print('m:',r,' path:',path)
+    # excute all rollback by order. [-no] migrate one table with no.
+    if len(r) == 0:
+        # default
+        run_rollback(path=path)
+        return
+
+    for r_arg in r:
+        f = _rm_arg_to_fname(r_arg,path)
+        
+        try:
+            run_one_rollback(f)
+        except Exception as e:
+            print("err:",e)
+            
+
+def cmd_excutor(g=None,m=None,r=None,path=None):
+    path=path[0] if path else None
+    if g is not None:
+        # g: generate content eg: g create_table_risk_order
+        generate_file(name=g[0],path=path)
+
+    if m is not None:
+        handle_m_cmd(m,path)
+
+    if r is not None:
+        handle_r_cmd(r,path)
+
+def console(args):
+    # run_migrate(path=None)
+    if len(args) <= 1:
+        print_usage()
+        return
+
+    if args[1] == 'g':
+        path = None
+        if len(args) > 3:
+            path = args[3]
+        generate_file(name=args[2], path=path)
+
+    if args[1] == 'm':
+        path = None
+        if len(args) > 2:
+            path = args[2]
+        run_migrate(path=path)
+
+    if args[1] == 'r':
+        path = None
+        if len(args) > 2:
+            path = args[2]
+        run_rollback(path=path)
+
+
+if __name__ == '__main__':
+    opt = parse_opt()
+    cmd_excutor(**vars(opt))
+    # console(sys.argv)

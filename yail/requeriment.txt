@@ -1,0 +1,4 @@
+watchdog
+aiohttp
+aiomysql
+cryptography
