@@ -1,0 +1,7 @@
+.DS_Store
+node_modules/
+_pycache
+
+# Editor directories and files
+.pyc
+
