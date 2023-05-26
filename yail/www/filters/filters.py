@@ -94,7 +94,7 @@ def cors(request, response):
 
 
 def debug_request(request):
-    print("debug_request")
+    print("debug_request:", request)
     print(
         "|request.version:",
         request.version,

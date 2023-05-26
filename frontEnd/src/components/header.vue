@@ -7,56 +7,88 @@
     </div>
     <div class="log-out" v-if="!!userId">
       <el-dropdown @command="handleCommand">
-        <span class="el-dropdown-link">
-          {{userName}}<i class="el-icon-arrow-down el-icon--right"></i>
-        </span>
-        <el-dropdown-menu slot="dropdown">
-          <el-dropdown-item command="showAddDialog">添加用户</el-dropdown-item>
-          <el-dropdown-item command="loginOut">退出</el-dropdown-item>
-        </el-dropdown-menu>
-      </el-dropdown>
-    </div>
-    <div class="nav-dropdown" :class="{ active: isActive }"
-      @mouseenter="showNav" @mouseleave="hideNav">
-      <ul>
-        <!-- <li @click="goTo">工作记录</li> -->
-        <li @click="goTo">需求管理</li>
-      </ul>
-    </div>
-    <!-- 弹窗组件 start -->
-    <el-dialog
-    :visible.sync="dialogFormVisible"
-    :close-on-click-modal="false"
-    width="40%"
-    title="添加新用户"
-    >
-      <el-form :model="memberData" :label-position="labelPosition" :rules="rules" ref="memberData" label-width="80px">
-        <el-form-item label="账户" style="width:80%" prop="userName">
-          <el-input v-model="memberData.userName"></el-input>
-        </el-form-item>
-        <el-form-item label="姓名" style="width:80%" prop="nickname">
-          <el-input v-model="memberData.nickname"></el-input>
-        </el-form-item>
-        <el-form-item label="密码" style="width:80%" prop="password">
-          <el-input v-model="memberData.password" type="password"></el-input>
-        </el-form-item>
-        <el-form-item label="确认密码" style="width:80%" prop="checkPassword">
-          <el-input v-model="memberData.checkPassword" type="password"></el-input>
-        </el-form-item>
-      </el-form>
-      <div slot="footer" class="dialog-footer">
-        <el-button @click="dialogFormVisible = false">取 消</el-button>
-        <el-button
-          type="primary"
-          @click="submitForm('memberData')"
-        >确 定</el-button>
-      </div>
-    </el-dialog>
-    <!-- 弹窗组件 end -->
+              <span class="el-dropdown-link"><i class="el-icon-user"></i> {{ this.userName }}
+                <i class="el-icon-arrow-down el-icon--right"></i>
+              </span>
+              <el-dropdown-menu slot="dropdown">
+              <el-dropdown-item command="resetPass"><i class="el-icon-setting"></i>重置密码</el-dropdown-item>
+              <el-dropdown-item command="showAddDialog"><i class="el-icon-plus"></i> 添加用户</el-dropdown-item>
+            <el-dropdown-item command="loginOut"><i class="el-icon-switch-button"></i>退出</el-dropdown-item>
+            </el-dropdown-menu>
+            </el-dropdown>
+              </div>
+              <div class="nav-dropdown" :class="{ active: isActive }"
+                @mouseenter="showNav" @mouseleave="hideNav">
+                <ul>
+                  <!-- <li @click="goTo">工作记录</li> -->
+                  <li @click="goTo">需求管理</li>
+                </ul>
+              </div>
+              <!-- 弹窗组件 start -->
+              <el-dialog
+              :visible.sync="dialogFormVisible"
+              :close-on-click-modal="false"
+              width="40%"
+              title="添加新用户"
+              >
+                <el-form :model="memberData" :label-position="labelPosition" :rules="rules" ref="memberData" label-width="80px">
+                  <el-form-item label="账户" style="width:80%" prop="userName">
+                    <el-input v-model="memberData.userName"></el-input>
+                  </el-form-item>
+                  <el-form-item label="姓名" style="width:80%" prop="nickname">
+                    <el-input v-model="memberData.nickname"></el-input>
+                  </el-form-item>
+                  <el-form-item label="密码" style="width:80%" prop="password">
+                    <el-input v-model="memberData.password" type="password"></el-input>
+                  </el-form-item>
+                  <el-form-item label="确认密码" style="width:80%" prop="checkPassword">
+                    <el-input v-model="memberData.checkPassword" type="password"></el-input>
+                  </el-form-item>
+                </el-form>
+                <div slot="footer" class="dialog-footer">
+                  <el-button @click="dialogFormVisible = false">取 消</el-button>
+                  <el-button
+                    type="primary"
+                    @click="submitForm('memberData')"
+                  >确 定</el-button>
+                </div>
+              </el-dialog>
+              <!-- 弹窗组件 end -->
+              <!-- 弹窗组件 start -->
+              <el-dialog
+              :visible.sync="dialogResetVisible"
+              :close-on-click-modal="false"
+              width="40%"
+              title="重置密码"
+              >
+                <el-form :model="memberData" :label-position="labelPosition" :rules="rules" ref="memberData" label-width="80px">
+                  <el-form-item label="账户" style="width:80%" prop="userName">
+                    <el-input v-model="memberData.userName" :disabled="true"></el-input>
+                  </el-form-item>
+                  <el-form-item label="姓名" style="width:80%" prop="nickname">
+                    <el-input v-model="memberData.nickname" :disabled="true"></el-input>
+                  </el-form-item>
+                  <el-form-item label="密码" style="width:80%" prop="password">
+                    <el-input v-model="memberData.password" type="password"></el-input>
+                  </el-form-item>
+                  <el-form-item label="确认密码" style="width:80%" prop="checkPassword">
+                    <el-input v-model="memberData.checkPassword" type="password"></el-input>
+                  </el-form-item>
+                </el-form>
+                <div slot="footer" class="dialog-footer">
+                  <el-button @click="dialogResetVisible = false">取 消</el-button>
+                  <el-button
+                    type="primary"
+                    @click="resetPasswd('memberData')"
+                  >确 定</el-button>
+                </div>
+              </el-dialog>
+              <!-- 弹窗组件 end -->
   </header>
 </template>
 <script>
-import {mapActions} from 'vuex'
+// import { none } from 'html-webpack-plugin/lib/chunksorter';
+import { mapActions } from 'vuex'
 export default {
   data() {
     var validatePass = (rule, value, callback) => {
@@ -81,6 +113,7 @@ export default {
     return {
       isActive: false,
       dialogFormVisible: false,
+      dialogResetVisible: false,
       labelPosition: 'right',
       userName: '',
       typeId: 0, //组或公司标记
@@ -116,10 +149,10 @@ export default {
       return this.$store.state.userId
     }
   },
-  // mounted() {
-  //   this.getUserNameBeforeSetDialog()
-  // },
-  
+  mounted() {
+    this.getUserNameBeforeSetDialog()
+  },
+
   methods: {
     ...mapActions(['get', 'post']),
     showNav() {
@@ -129,12 +162,16 @@ export default {
       this.isActive = false
     },
     goTo() {
-      window.location.href= '//180.3.13.229:9091/#/task'
+      window.location.href = '//180.3.13.229:9091/#/task'
     },
     // 登出
     handleCommand(command) {
       if (command == 'showAddDialog') {
         this.dialogFormVisible = true
+      }
+      if (command == 'resetPass') {
+        this.getAndBindUserData()
+        this.dialogResetVisible = true
       }
       if (command == 'loginOut') {
         this.$store.dispatch('loginOut').then(location.reload())
@@ -144,24 +181,57 @@ export default {
     getUserNameBeforeSetDialog() {
       let userId = this.$store.state.userId
       this.get({
-				url: 'user/'
-			}).then(response => {
-				response.forEach(e => {
-          if (e.userId == userId) {
-            this.userName = e.nickname
+        url: 'user/'
+      }).then(response => {
+        response.forEach(e => {
+          if (e.user_id == userId) {
+            this.userName = e.username
             this.typeId = e.typeId
             this.roleId = e.roleId
           }
-				})
-			}).catch(err => {
-				console.log(err)
-			})
+        })
+      }).catch(err => {
+        console.log(err)
+      })
     },
+
+    // 根据userId加载用户信息并绑定到memberData
+    getAndBindUserData() {
+      let userId = this.$store.state.userId
+      this.get({
+        url: 'user/' + userId
+      }).then(response => {
+        console.log(response)
+        this.memberData.userName = response.username, this.memberData.nickname = response.nickname
+      }).catch(err => {
+        console.log(err)
+      })
+    },
+
     // 提交表单前验证
     submitForm(formName) {
       this.$refs[formName].validate((valid) => {
         if (valid) {
           this.addNewMember()
+        } else {
+          console.log('error submit!!')
+          return false;
+        }
+      });
+    },
+
+    resetPasswd(formName) {
+      this.$refs[formName].validate((valid) => {
+        if (valid) {
+          this.post({
+            url: 'user/' + this.userId + '/reset',
+            data: { 'new_passwd': this.memberData.password }
+          }).then(response => {
+            this.dialogResetVisible = false
+            this.$message.success('添加成功');
+          }).catch(error => {
+            this.$message.error(error);
+          })
         } else {
           console.log('error submit!!')
           return false;

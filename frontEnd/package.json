@@ -13,8 +13,9 @@
     "build": "node build/build.js"
   },
   "dependencies": {
-    "element-ui": "^2.15.7",
+    "element-ui": "^2.15.13",
     "js-cookie": "^2.2.0",
+    "vue": "^2.7.14",
     "vue-router": "^3.0.1",
     "vuex": "^3.0.1"
   },
@@ -66,7 +67,6 @@
     "shelljs": "^0.7.6",
     "uglifyjs-webpack-plugin": "^1.1.1",
     "url-loader": "^0.5.8",
-    "vue": "^3.2.36",
     "vue-axios": "^2.1.1",
     "vue-jest": "^1.0.2",
     "vue-loader": "^13.3.0",
