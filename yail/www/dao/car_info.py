@@ -1,7 +1,7 @@
 from . import field_desc as fd
 from .base import AutoIdModel
 
-# import asyncio
+import asyncio
 
 # import datetime
 
@@ -22,3 +22,12 @@ class CarInfo(AutoIdModel):
 
     created_at = fd.CreatedAtField()
     updated_at = fd.UpdatedAtField()
+
+    @classmethod
+    @asyncio.coroutine
+    def find_by_carno(cls, val):
+        args_val = ['\%' + val + '\%']
+        where = 'carid like ?'
+
+        rows = yield from cls.find_where(where, *args_val)
+        return rows

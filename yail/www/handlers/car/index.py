@@ -44,46 +44,66 @@ def page(page):
     #               {'no':3,'dept':'技术运维保障部','name':'路人乙','carNo':'沪ADN3355','brand':'TESLA','carlicense':'ABCDEF4536','license':'ABCDEF4536','abbr':''}]}
 
 
-@post('/car/search')
-@ResponseBody
-@RequestBody('page', kls=VoPage)
-@asyncio.coroutine
-def search(page):
-    print(page)
-    cars = yield from CarInfo.find_all()
+class SearchOptions:
+    OP_CAR_NO = 1
+    OP_NAME = 2
+    OP_DEPT = 3
+    OP_BRAND = 4
 
-    return {
-        'page': {
-            'totalItem': 10,
-            'currentPage': 1,
-            'pageSize': 10
-        },
-        'carInfo': cars
-    }
+    options = [{
+        "value": OP_CAR_NO,
+        "label": "车牌号",
+    }, {
+        "value": OP_NAME,
+        "label": "姓名",
+    }, {
+        "value": OP_DEPT,
+        "label": "部门",
+    }, {
+        "value": OP_BRAND,
+        "label": "品牌",
+    }]
+
+    @classmethod
+    def op_to_column(cls, option):
+        op_cols_dic = {1: 'carNo', 2: 'name', 3: 'dept', 4: 'brand'}
+
+        return op_cols_dic[option]
 
 
 @get('/car/search/options')
 @ResponseBody
 @asyncio.coroutine
 def search_options():
-    return [
-        {
-            "value": "1",
-            "label": "车牌号",
-        },
-        {
-            "value": "2",
-            "label": "姓名",
-        },
-        {
-            "value": "3",
-            "label": "部门",
-        },
-        {
-            "value": "4",
-            "label": "品牌",
-        }
-    ]
+    return SearchOptions.options
+
+
+@post('/car/search')
+@ResponseBody
+@RequestBody('page', kls=VoPage)
+@asyncio.coroutine
+def search(page):
+    print(page.option, page.query, True if page.query else False)
+    cars = []
+    if not page.query:
+        cars = yield from CarInfo.find_all()
+        return VoPage(carInfo=cars)
+
+    option = SearchOptions.OP_CAR_NO  # default search by car number.
+    if page.option:
+        option = int(page.option)
+
+    if option == SearchOptions.OP_NAME or option == SearchOptions.OP_DEPT or option == SearchOptions.OP_BRAND:
+        col_name = SearchOptions.op_to_column(option)
+        print('col_name', col_name)
+        cars = yield from CarInfo.find(**{col_name: page.query})
+
+    if option == SearchOptions.OP_CAR_NO:
+        # cars = yield from CarInfo.find(**{'carNo': page.query})
+        cars = yield from CarInfo.find_by_carno(page.query)
+        print('carNo', page.query, len(cars))
+
+    return VoPage(carInfo=cars)
 
 
 @post('/car/add')

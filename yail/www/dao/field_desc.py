@@ -150,10 +150,11 @@ class StatusField(CharField):
         super().__init__(name=name, default=default, desc=desc)
 
 # carinfo
-class CarNoField(CharField):
+class CarNoField(StringField):
     '''传统车7字符，新能源8字符，预留4字符'''
     def __init__(self, name='carid', desc='carid'):
-        super().__init__(name=name,size=12,desc=desc)
+        super().__init__(name=name, desc=desc)
+
 
 class BrandField(StringField):
     def __init__(self, desc='brand'):

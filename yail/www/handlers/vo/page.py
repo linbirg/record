@@ -6,4 +6,4 @@ from www.common.vo import ViewObj
 
 
 class VoPage(ViewObj):
-    pass
+    page = {'totalItem': 10, 'currentPage': 1, 'pageSize': 10}
