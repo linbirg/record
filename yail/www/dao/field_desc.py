@@ -182,4 +182,6 @@ class ImgsField(StringField):
                          desc=desc)
 
 
-
+class PicPathField(StringField):
+    def __init__(self, desc='图片路径'):
+        super().__init__(name='path', desc=desc)

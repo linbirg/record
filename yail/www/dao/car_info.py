@@ -1,4 +1,3 @@
-
 from . import field_desc as fd
 from .base import AutoIdModel
 
@@ -19,10 +18,7 @@ class CarInfo(AutoIdModel):
     carLicense = fd.CarLicenseField()
     license = fd.LicenseField()
     abbr = fd.AbbrField()
-    imgs = fd.ImgsField()
+    # imgs = fd.ImgsField()
 
     created_at = fd.CreatedAtField()
     updated_at = fd.UpdatedAtField()
-
-
-        

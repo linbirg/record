@@ -1,0 +1,6 @@
+# .eslintignore
+build/*.js
+src/assets
+public
+dist
+.eslintrc.js

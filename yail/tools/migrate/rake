@@ -207,7 +207,7 @@ def generate_file(name='migrate_task', path=None):
         path = get_current_path()
 
     slash_name = change_to_slash_name(name)
-    
+
     numbered_name = '%d_%s.py' % (max_number(path) + 1, slash_name)
 
     full_path = os.path.sep.join([path, numbered_name])
@@ -299,8 +299,12 @@ def print_usage():
     print('usage python rake.py [cmd]')
     print('[cmd]:')
     print('     g: generate content eg: g create_table_risk_order')
-    print('     m: excute all migration by order. [-i no] migrate one table with no. eg: m  or m ./ or m 2')
-    print('     r: rollback by desc order or only a table with no. eg: r or r ./ or r 2')
+    print(
+        '     m: excute all migration by order. [-i no] migrate one table with no. eg: m  or m ./ or m 2'
+    )
+    print(
+        '     r: rollback by desc order or only a table with no. eg: r or r ./ or r 2'
+    )
 
 
 def print_args(args: Optional[dict] = None, show_file=True, show_fcn=False):
@@ -310,50 +314,90 @@ def print_args(args: Optional[dict] = None, show_file=True, show_fcn=False):
     if args is None:  # get args automatically
         args, _, _, frm = inspect.getargvalues(x)
         args = {k: v for k, v in frm.items() if k in args}
-    s = (f'{Path(file).stem}: ' if show_file else '') + (f'{fcn}: ' if show_fcn else '')
+    s = (f'{Path(file).stem}: ' if show_file else '') + (f'{fcn}: '
+                                                         if show_fcn else '')
     print(s + ', '.join(f'{k}={v}' for k, v in args.items()))
+
 
 def parse_opt():
     parser = argparse.ArgumentParser()
-    parser.add_argument('--g', nargs=1, type=str, help='g: generate content eg: g create_table_risk_order')
-    parser.add_argument('--m', nargs='*', type=str, default=None, help='excute all migration by order. [-no] migrate one table with no.')
-    parser.add_argument('--r', nargs='*', type=str, default=None, help='rollback by desc order or tables with no.')
-    parser.add_argument('--path', nargs='+', type=str, default='./', help='path. defualt current dir.')
+    parser.add_argument(
+        '--g',
+        nargs=1,
+        type=str,
+        help='g: generate content eg: g create_table_risk_order')
+    parser.add_argument(
+        '--m',
+        nargs='*',
+        type=str,
+        default=None,
+        help='excute all migration by order. [-no] migrate one table with no.')
+    parser.add_argument('--r',
+                        nargs='*',
+                        type=str,
+                        default=None,
+                        help='rollback by desc order or tables with no.')
+    parser.add_argument('--path',
+                        nargs='+',
+                        type=str,
+                        default='./',
+                        help='path. defualt current dir.')
     opt = parser.parse_args()
     print_args(vars(opt))
     return opt
 
-def _find_by_no(no,path):
+
+def _find_by_no_or_table(no_or_table, path):
     if path is None:
         path = get_current_path()
 
     childs = list_all_migration_files(path)
     sorted_childs = _sort_(childs)
 
-    for c in sorted_childs:
-        if c.startswith(str(no)):
+    if no_or_table.isdigit():
+        no = no_or_table
+        for c in sorted_childs:
+            if c.startswith(str(no)):
+                return c
+
+        return False
+
+    # 参数为表名
+    for c in sorted_childs:  # 寻找匹配表名的字符串
+        # 非数字部分与名称匹配
+        l = c.index('_') if '_' in c else 0  # 名称为形式"1_table_name.py"找到字符串开头
+        r = c.index('.py')
+        t = c[l + 1:r]
+        # 判断是否与表名匹配
+        # print(c, no_or_table, c == no_or_table)
+        if t == no_or_table:
             return c
-    
-    # 未找到则不做处理
-    return no
+
+    # no未找到
+    return False
 
 
-def _rm_arg_to_fname(arg,path):
-    if arg.isdigit():
-        name = _find_by_no(arg,path)
+def _rm_arg_to_fname(arg, path):
+    # name = arg
+    # if arg.isdigit():
+    name = _find_by_no_or_table(arg, path)
 
-    f = name  
+    if not name:
+        raise Exception('Can not find the file name or table name:%s' % arg)
+
+    f = name
     if not name.endswith('.py'):
-        f = name +'.py'
-    print('f:',f)
+        f = name + '.py'
+    print('f:', f)
 
     if not is_name_numberd(f):
         print(f'Warning:{name} is not a number started name.'.format(name))
 
     return f
 
+
 def handle_m_cmd(m, path):
-    print('m:',m,' path:',path)
+    print('m:', m, ' path:', path)
     # excute all migration by order. [-no] migrate one table with no.
     if len(m) == 0:
         # default
@@ -361,15 +405,15 @@ def handle_m_cmd(m, path):
         return
 
     for m_arg in m:
-        f = _rm_arg_to_fname(m_arg,path)
+        f = _rm_arg_to_fname(m_arg, path)
         try:
             run_one_migrate(f)
         except Exception as e:
-            print("err:",e)
+            print("err:", e)
 
 
-def handle_r_cmd(r,path):
-    print('m:',r,' path:',path)
+def handle_r_cmd(r, path):
+    print('m:', r, ' path:', path)
     # excute all rollback by order. [-no] migrate one table with no.
     if len(r) == 0:
         # default
@@ -377,25 +421,26 @@ def handle_r_cmd(r,path):
         return
 
     for r_arg in r:
-        f = _rm_arg_to_fname(r_arg,path)
-        
+        f = _rm_arg_to_fname(r_arg, path)
+
         try:
             run_one_rollback(f)
         except Exception as e:
-            print("err:",e)
-            
+            print("err:", e)
 
-def cmd_excutor(g=None,m=None,r=None,path=None):
-    path=path[0] if path else None
+
+def cmd_excutor(g=None, m=None, r=None, path=None):
+    path = path[0] if path else None
     if g is not None:
         # g: generate content eg: g create_table_risk_order
-        generate_file(name=g[0],path=path)
+        generate_file(name=g[0], path=path)
 
     if m is not None:
-        handle_m_cmd(m,path)
+        handle_m_cmd(m, path)
 
     if r is not None:
-        handle_r_cmd(r,path)
+        handle_r_cmd(r, path)
+
 
 def console(args):
     # run_migrate(path=None)

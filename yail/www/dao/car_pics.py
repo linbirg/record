@@ -7,11 +7,11 @@ from .base import AutoIdModel
 
 
 class CarPics(AutoIdModel):
-    __table__ = "t_car_pic"
+    __table__ = "t_car_pics"
 
     no = fd.IntField(name='id', primary_key=True, auto_increment=True)
 
-    carNo = fd.CarNoField()
+    carID = fd.IntField(name='car_id')
 
     path = fd.PicPathField()
 

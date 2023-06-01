@@ -32,15 +32,12 @@ class CarInfo(RakeMigrate):
         return db_conn
 
     def up(self):
-        self.create_table('t_car_info',
-        fd.IntField(name='id', primary_key=True, auto_increment=True),
-        fd.UserNameField(),
-        fd.DepartmentField(),
-        fd.CarNoField(),
-        fd.BrandField(),
-        fd.CarLicenseField(),
-        fd.LicenseField(),fd.ImgsField(),
-        fd.AbbrField(), fd.UpdatedAtField(), fd.CreatedAtField())
+        self.create_table(
+            't_car_info',
+            fd.IntField(name='id', primary_key=True, auto_increment=True),
+            fd.UserNameField(), fd.DepartmentField(), fd.CarNoField(),
+            fd.BrandField(), fd.CarLicenseField(), fd.LicenseField(),
+            fd.AbbrField(), fd.UpdatedAtField(), fd.CreatedAtField())
 
     def down(self):
         self.drop('t_car_info')

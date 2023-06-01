@@ -7,7 +7,7 @@
     </div>
     <div class="log-out" v-if="!!userId">
       <el-dropdown @command="handleCommand">
-              <span class="el-dropdown-link"><i class="el-icon-user"></i> {{ this.userName }}
+              <span class="el-dropdown-link"><i class="el-icon-user"></i> {{ userName }}
                 <i class="el-icon-arrow-down el-icon--right"></i>
               </span>
               <el-dropdown-menu slot="dropdown">

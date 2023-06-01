@@ -33,9 +33,9 @@ class tCarPic(RakeMigrate):
 
     def up(self):
         self.create_table(
-            't_car_pic',
+            't_car_pics',
             fd.IntField(name='id', primary_key=True, auto_increment=True),
-            fd.CarNoField(), fd.PicPathField(), fd.UpdatedAtField(),
+            fd.IntField(name='car_id'), fd.PicPathField(), fd.UpdatedAtField(),
             fd.CreatedAtField())
 
     def down(self):
