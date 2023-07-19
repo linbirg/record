@@ -38,6 +38,7 @@ class weekNote(RakeMigrate):
             fd.UserIDField(desc='用户id'), fd.UserNameField(),
             fd.WeekCountField(),
             fd.WeekCountField(name='week_day', desc='Week Day'),
+            fd.RegDateField(name='rec_date', desc='rec_date'),
             fd.UpdatedAtField(), fd.CreatedAtField())
 
     def down(self):
