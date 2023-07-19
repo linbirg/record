@@ -33,7 +33,8 @@ class WeekNoteRake(Model):
     week_count = fd.WeekCountField()
     week_day = fd.WeekCountField(name='week_day', desc='Week Day')
 
-    # rec_date = fd.RegDateField(name='rec_date', desc='rec_date')
+    rec_date = fd.RegDateField(name='rec_date', desc='rec_date')
+    # year = fd.IntField(name='year', desc='rec year')
 
     created_at = fd.CreatedAtField()
     updated_at = fd.UpdatedAtField()
@@ -48,7 +49,8 @@ class WeekNoteRakeBK(WeekNoteRake):
     week_count = fd.WeekCountField()
     week_day = fd.WeekCountField(name='week_day', desc='Week Day')
 
-    # rec_date = fd.RegDateField(name='rec_date', desc='rec_date')
+    rec_date = fd.RegDateField(name='rec_date', desc='rec_date')
+    # year = fd.IntField(name='year', desc='rec year')
 
     created_at = fd.CreatedAtField()
     updated_at = fd.UpdatedAtField()
@@ -60,6 +62,7 @@ class WeekNoteRakeBK(WeekNoteRake):
         one.user_name = other.user_name
         one.week_count = other.week_count
         one.week_day = other.week_day
+        one.rec_date = other.rec_date
         one.created_at = other.created_at
         one.updated_at = other.updated_at
 
@@ -87,12 +90,12 @@ def init_pool(loop):
 
 @asyncio.coroutine
 def handle_detail(week):
-    rec_day = DateHelper.to_date(week.created_at)
+    year = DateHelper.to_date(week.rec_date).year
 
     nWeek = WeekNote()
     nWeek = WeekNoteRakeBK.one_from_other(nWeek, week)
 
-    nWeek.rec_date = rec_day
+    nWeek.year = year
 
     yield from nWeek.save()
 
@@ -115,6 +118,7 @@ class weekNoteRM(RakeMigrate):
                           fd.UserIDField(desc='用户id'), fd.UserNameField(),
                           fd.WeekCountField(),
                           fd.WeekCountField(name='week_day', desc='Week Day'),
+                          fd.RegDateField(name='rec_date', desc='rec_date'),
                           fd.UpdatedAtField(), fd.CreatedAtField())
 
     def drop_bk(self):
@@ -128,7 +132,8 @@ class weekNoteRM(RakeMigrate):
             fd.WeekCountField(),
             fd.WeekCountField(name='week_day', desc='Week Day'),
             fd.RegDateField(name='rec_date', desc='rec_date'),
-            fd.UpdatedAtField(), fd.CreatedAtField())
+            fd.IntField(name='year', desc='rec year'), fd.UpdatedAtField(),
+            fd.CreatedAtField())
 
     def down(self):
         self.drop('t_week_note')
@@ -137,6 +142,7 @@ class weekNoteRM(RakeMigrate):
 def create_bk_table():
     note = weekNoteRM()
     try:
+        note.drop_bk()
         note.create_bk()
     except Exception as e:
         print('create table error:', e)

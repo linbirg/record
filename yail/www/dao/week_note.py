@@ -21,6 +21,7 @@ class WeekNote(AutoIdModel):
     week_day = fd.WeekCountField(name='week_day', desc='Week Day')
 
     rec_date = fd.RegDateField(name='rec_date', desc='rec_date')
+    year = fd.IntField(name='year', desc='rec year')
 
     created_at = fd.CreatedAtField()
     updated_at = fd.UpdatedAtField()
