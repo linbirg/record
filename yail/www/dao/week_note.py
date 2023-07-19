@@ -12,7 +12,7 @@ import datetime
 class WeekNote(AutoIdModel):
     __table__ = "t_week_note"
 
-    
+
 
     note_id = fd.IntField(name='id', primary_key=True, auto_increment=True)
     user_id = fd.UserIDField(desc='用户id')
@@ -20,10 +20,12 @@ class WeekNote(AutoIdModel):
     week_count = fd.WeekCountField()
     week_day = fd.WeekCountField(name='week_day', desc='Week Day')
 
+    rec_date = fd.RegDateField(name='rec_date', desc='rec_date')
+
     created_at = fd.CreatedAtField()
     updated_at = fd.UpdatedAtField()
 
-   
+
 
 
 class Detail(AutoIdModel):
@@ -49,4 +51,3 @@ class Detail(AutoIdModel):
     def find_between(cls, user_id,start,end,status=fd.StatusField.STATUS_DONE):
         details = yield from cls.find_where('user_id = ? and status=? and rec_date between ? and ?',user_id,status, start,end)
         return details
-        

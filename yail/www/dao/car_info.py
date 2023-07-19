@@ -26,8 +26,9 @@ class CarInfo(AutoIdModel):
     @classmethod
     @asyncio.coroutine
     def find_by_carno(cls, val):
-        args_val = ['\%' + val + '\%']
-        where = 'carid like ?'
+        args_val = (f'%{val}%'.format(val), )
+
+        where = "carid LIKE ?"
 
         rows = yield from cls.find_where(where, *args_val)
         return rows

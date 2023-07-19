@@ -11,7 +11,7 @@ from www.handlers.vo.vo_car_info import VoCarInfo
 from www.dao.car_info import CarInfo
 from www.dao.car_pics import CarPics
 
-from conf.dev import PIC_DIR
+from conf.dev import PIC_DIR, PIC_URL
 
 
 @get('/car/index')
@@ -31,17 +31,7 @@ def page(page):
 
     cars = yield from CarInfo.find_all()
 
-    return {
-        'page': {
-            'totalItem': 10,
-            'currentPage': 1,
-            'pageSize': 10
-        },
-        'carInfo': cars
-    }
-
-    # return {'page': {'totalItem': 1}, 'carInfo': [{'no':1,'dept':'综合','name':'路人甲','carNo':'沪ADN3689','brand':'TESLA','carlicense':'ABCDEF4536','license':'ABCDEF4536','abbr':''},
-    #               {'no':3,'dept':'技术运维保障部','name':'路人乙','carNo':'沪ADN3355','brand':'TESLA','carlicense':'ABCDEF4536','license':'ABCDEF4536','abbr':''}]}
+    return VoPage(carInfo=cars)
 
 
 class SearchOptions:
@@ -83,7 +73,7 @@ def search_options():
 @RequestBody('page', kls=VoPage)
 @asyncio.coroutine
 def search(page):
-    print(page.option, page.query, True if page.query else False)
+    # print(page.option, page.query, True if page.query else False)
     cars = []
     if not page.query:
         cars = yield from CarInfo.find_all()
@@ -95,13 +85,11 @@ def search(page):
 
     if option == SearchOptions.OP_NAME or option == SearchOptions.OP_DEPT or option == SearchOptions.OP_BRAND:
         col_name = SearchOptions.op_to_column(option)
-        print('col_name', col_name)
         cars = yield from CarInfo.find(**{col_name: page.query})
 
     if option == SearchOptions.OP_CAR_NO:
-        # cars = yield from CarInfo.find(**{'carNo': page.query})
         cars = yield from CarInfo.find_by_carno(page.query)
-        print('carNo', page.query, len(cars))
+        # print('carNo', page.query, len(cars))
 
     return VoPage(carInfo=cars)
 
@@ -192,7 +180,8 @@ def qry_filelist(no):
     filelist = []
 
     for p in pics:
-        url = '/static/car/' + p.path
+        # url = '/static/car/' + p.path
+        url = PIC_URL + '/' + p.path
         img_resp = {'name': p.path, 'url': url}
 
         filelist.append(img_resp)
@@ -210,27 +199,19 @@ def delete_pic(no, filename):
     if car is None:
         raise aiohttp.HTTPError(500, 'CarInfo not found')
 
-    pic = yield from CarPics.find(carID=car.no, path=filename)  # 找到car的图片
-    if pic is None:
+    pics = yield from CarPics.find(carID=car.no, path=filename)  # 找到car的图片
+    if pics is None or len(pics) == 0:
         logger.LOG_WARNING(f"Can not find car {no} pic:{filename}".format(
             no, filename))
 
-        return Message('ok!')
+        return Message('delete ok but not find pics.')
 
-    yield from pic.delete()
+    for p in pics:
+        yield from p.delete()
 
     return Message('ok!')
 
-    # imgs_str = car.imgs if car.imgs else ''  # 保留原始图片名称或空字符串
-    # del_str = filename
-    # if filename + ';' in imgs_str:
-    #     del_str = f'{filename};'.format(filename)
-
-    # imgs_str = imgs_str.replace(del_str, '')
-
-    # car.imgs = imgs_str
-
-    # yield from car.update()
+    
 
 
 @post('/car/delete')

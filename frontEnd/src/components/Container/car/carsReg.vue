@@ -50,6 +50,7 @@
       stripe>
       <el-table-column
         prop="no"
+        type="index"
         label="序号"
         width="60">
       </el-table-column>
@@ -232,7 +233,7 @@
         delId: "",
         tableData: [],
         qry: "",
-        select: "车牌号",
+        select: 1,
         qry_options: [],
         carInfo: {
           no: -1,
@@ -435,7 +436,7 @@
         this.loading = true;
         this.post({
           url: "car/search",
-          data: { col: this.select, qry: this.qry },
+          data: { option: this.select, query: this.qry },
         })
           .then((response) => {
             this.loading = false;

@@ -243,11 +243,16 @@ class ModelMetaClass(type):
                 ))
 
         # 只是为了Model编写方便，放在元类里和放在Model里都可以
-        attrs["__select__"] = "select %s,%s from %s " % (
-            __get_sql_cols_list(pkeys),
-            __get_sql_cols_list(fields),
-            tableName,
-        )
+        # attrs["__select__"] = "select %s,%s from %s " % (
+        #     __get_sql_cols_list(pkeys),
+        #     __get_sql_cols_list(fields),
+        #     tableName,
+        # )
+        # 拟使用format来格式化字符串
+        attrs["__select__"] = "select {pkeys},{fields} from {table} ".format(
+            pkeys=__get_sql_cols_list(pkeys),
+            fields=__get_sql_cols_list(fields),
+            table=tableName)
 
         attrs["__update__"] = "update %s set %s where %s" % (
             tableName,
@@ -366,7 +371,7 @@ class Model(dict, metaclass=ModelMetaClass):
     @classmethod
     def get_sql_where_con_pairs_list(cls, cols):
         return " and ".join(
-            map(lambda k: '%s=?' % (cls.__get_key_name__(k)), cols))
+            map(lambda k: '{}=?'.format(cls.__get_key_name__(k)), cols))
 
     @staticmethod
     def __func_create_row__(cursor):
@@ -391,7 +396,6 @@ class Model(dict, metaclass=ModelMetaClass):
         # print("to select:", sql)
         logger.LOG_TRACE("to select:%s", sql)
         with (yield from cls.get_connection()) as conn:
-            # print(conn)
             cur = yield from conn.cursor(aiomysql.DictCursor)
             yield from cur.execute(sql.replace('?', '%s'), args or ())
             cur.rowfactory = cls.__func_create_row__(cur)
