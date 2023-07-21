@@ -26,28 +26,34 @@ def page(page):
     return {'page': {'totalItem': 1}, 'note': VoNoteRisk.from_notes(notes)}
 
 
-@post("/noteRisk/submitNoteRisk.action")
-@asyncio.coroutine
-@RequestBody('risk_note', kls=VoNoteRisk)
-def post_risk_note(risk_note):
-    note = WeekNote(user_id=risk_note.userId,
-                    username=risk_note.userName,
-                    reg_date=risk_note.regDate,
-                    week_count=risk_note.weekCount,
-                    job=risk_note.job,
-                    new_job=risk_note.newJob,
-                    risk=risk_note.risk,
-                    risk_solve_time=risk_note.riskSolveTime)
+# @post("/noteRisk/submitNoteRisk.action")
+# @asyncio.coroutine
+# @RequestBody('risk_note', kls=VoNoteRisk)
+# def post_risk_note(risk_note):
+#     note = WeekNote(user_id=risk_note.userId,
+#                     username=risk_note.userName,
+#                     reg_date=risk_note.regDate,
+#                     week_count=risk_note.weekCount,
+#                     job=risk_note.job,
+#                     new_job=risk_note.newJob,
+#                     risk=risk_note.risk,
+#                     risk_solve_time=risk_note.riskSolveTime)
 
-    yield from note.save()
-    return Message('success', True)
+#     yield from note.save()
+#     return Message('success', True)
 
 
 @post("/note/query")
 @ResponseBody
 @asyncio.coroutine
-def query(userId, weekCount):
-    notes = yield from WeekNote.find(user_id=userId, week_count=weekCount)
+def query(userId, weekCount, year=None):
+    if year is None:
+        # 默认查询当年记录
+        year = DateHelper.today().year
+
+    notes = yield from WeekNote.find(user_id=userId,
+                                     week_count=weekCount,
+                                     year=year)
     vo_notes = []
     for nt in notes:
         vo_nt = VoWeekNote.from_model(nt)
@@ -110,9 +116,12 @@ def add_detail(userId, weekCount, weekDay, desc, status):
 
         return Message('failed', False)
 
+    year = DateHelper.today().year
+
     note = yield from WeekNote.find_one(user_id=userId,
                                         week_count=weekCount,
-                                        week_day=weekDay)
+                                        week_day=weekDay,
+                                        year=year)
 
     if note is None:
         logger.LOG_WARNING(
@@ -122,17 +131,18 @@ def add_detail(userId, weekCount, weekDay, desc, status):
         note = WeekNote(user_id=user.user_id,
                         user_name=user.username,
                         week_count=weekCount,
-                        week_day=weekDay)
+                        week_day=weekDay,
+                        year=year,
+                        rec_date=DateHelper.today())
         yield from note.save()
 
-    detail = Detail(
-        note_id=note.note_id,
-        user_id=userId,
-        user_name=user.username,
-        rec_date = DateHelper.today(),
-        week_day=weekDay,
-        status=status,
-        desc=desc)
+    detail = Detail(note_id=note.note_id,
+                    user_id=userId,
+                    user_name=user.username,
+                    rec_date=DateHelper.today(),
+                    week_day=weekDay,
+                    status=status,
+                    desc=desc)
 
     yield from detail.save()
 
@@ -149,9 +159,8 @@ def update_detail(detailId, desc, status):
         msg = 'can not find detail where id={}'.format(detailId)
         logger.LOG_TRACE(msg)
 
-        return Message('failed! '+ msg, False)
+        return Message('failed! ' + msg, False)
 
-    
     dt.desc = desc
     dt.status = status
 
