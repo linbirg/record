@@ -91,7 +91,7 @@
             >删除</el-button
           >
           <el-button
-            @click="showDelDialog(scope.row)"
+            @click="showHisDialog(scope.row)"
             type="text"
             size="small"
             >历史</el-button
@@ -418,6 +418,12 @@
       // 显示删除弹窗
       showDelDialog(data) {
         this.dialogDelVisible = true;
+        this.delNo = data.no;
+      },
+
+      // 显示删除弹窗
+      showHisDialog(data) {
+        // this.dialogDelVisible = true;
         this.delNo = data.no;
       },
 

@@ -26,23 +26,6 @@ def page(page):
     return {'page': {'totalItem': 1}, 'note': VoNoteRisk.from_notes(notes)}
 
 
-# @post("/noteRisk/submitNoteRisk.action")
-# @asyncio.coroutine
-# @RequestBody('risk_note', kls=VoNoteRisk)
-# def post_risk_note(risk_note):
-#     note = WeekNote(user_id=risk_note.userId,
-#                     username=risk_note.userName,
-#                     reg_date=risk_note.regDate,
-#                     week_count=risk_note.weekCount,
-#                     job=risk_note.job,
-#                     new_job=risk_note.newJob,
-#                     risk=risk_note.risk,
-#                     risk_solve_time=risk_note.riskSolveTime)
-
-#     yield from note.save()
-#     return Message('success', True)
-
-
 @post("/note/query")
 @ResponseBody
 @asyncio.coroutine

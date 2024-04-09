@@ -2,7 +2,7 @@
 # -*- coding: utf-8 -*-
 
 import logging
-logging.basicConfig(level=logging.INFO)
+logging.basicConfig(level=logging.DEBUG)
 
 import asyncio
 from aiohttp import web
