@@ -47,8 +47,8 @@
     data() {
       return {
         activities: [],
-        year: 2024,
-        month: 4,
+        year: new Date().getFullYear(),
+        month: new Date().getMonth() + 1,
       };
     },
     mounted() {
