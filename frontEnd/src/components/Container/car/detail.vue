@@ -157,6 +157,12 @@
         hasQryedFileList: false,
       };
     },
+
+    mounted() {
+      console.log("mounted");
+      this.showELUpload();
+    },
+
     methods: {
       ...mapActions(["get", "post"]),
 

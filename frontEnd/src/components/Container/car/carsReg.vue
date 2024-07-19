@@ -459,7 +459,7 @@
 </script>
 <style lang="scss" scoped>
   .cat-pad {
-    width: 1150px;
+    width: 1100px;
     min-height: 400px;
     border-radius: 4px;
     padding: 3px 0;
