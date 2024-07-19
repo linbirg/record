@@ -46,8 +46,8 @@ class Yeab():
         yield from orm.Pool.create_pool(loop=loop, **dbconf.rec_db)
 
         self.add_filters(self.__filters_pkg)
-        self.__app = web.Application(loop=loop)
-        # init_jinja2(app, filters=dict(datetime=datetime_filter))
+        self.__app = web.Application(loop=loop,client_max_size=1024**2*10)
+        
         add_routes(self.__app, self.__handlers)
 
         setup(self.__app, ExEncryptedCookieStorage())
