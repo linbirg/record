@@ -164,13 +164,6 @@ def upload(formData):
 @ResponseBody
 @asyncio.coroutine
 def qry_filelist(no):
-    # car = yield from CarInfo.find_one(no=no)
-
-    # imgs = car.imgs
-
-    # if imgs is None:
-    # return []
-
     pics = yield from CarPics.find(carID=no)
     if pics is None or len(pics) == 0:
         return []
