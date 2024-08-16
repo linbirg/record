@@ -57,7 +57,7 @@
       <el-table-column
         prop="name"
         label="姓名"
-        width="100">
+        width="80">
       </el-table-column>
       <el-table-column
         prop="dept"
@@ -68,13 +68,17 @@
         label="车牌号">
       </el-table-column>
       <el-table-column
+        prop="seqNo"
+        label="编号">
+      </el-table-column>
+      <el-table-column
         prop="brand"
         label="品牌">
       </el-table-column>
-      <!-- <el-table-column
-      prop="license"
-      label="行驶证">
-    </el-table-column> -->
+      <el-table-column
+        prop="regDate"
+        label="登记日期">
+      </el-table-column>
       <el-table-column label="操作">
         <template slot-scope="scope">
           <!-- <a>编辑</a><a>删除</a><a>历史</a> -->
@@ -151,9 +155,43 @@
           <el-input v-model="carInfo.carNo"></el-input>
         </el-form-item>
         <el-form-item
+          label="编号"
+          prop="seqNo">
+          <el-row :gutter="20">
+            <el-col
+              :span="6"
+              :offset="0"
+              style="padding-left: 0px">
+              <el-select
+                v-model="carInfo.seqNoPrefix"
+                placeholder="临No."
+                style="padding-left: 0px"
+                @change="seqSelectChange">
+                <el-option
+                  label="No."
+                  value="No."></el-option>
+                <el-option
+                  label="临No."
+                  value="临No."></el-option>
+              </el-select>
+            </el-col>
+            <el-col
+              :span="17"
+              :offset="0"
+              style="padding-right: 2px"
+              ><el-input v-model="carInfo.seqNoSuffix"></el-input
+            ></el-col>
+          </el-row>
+        </el-form-item>
+        <el-form-item
           label="品牌"
           prop="brand">
           <el-input v-model="carInfo.brand"></el-input>
+        </el-form-item>
+        <el-form-item
+          label="登记日期"
+          prop="regDate">
+          <el-input v-model="carInfo.regDate"></el-input>
         </el-form-item>
         <el-form-item
           label="行驶证"
@@ -240,14 +278,18 @@
           name: "",
           dept: "",
           carNo: "",
+          seqNoPrefix: "",
+          seqNoSuffix: "",
+          seqNo: "",
           brand: "",
+          regDate: "",
           carlicense: "",
           license: "",
           abbr: "",
           imgs: "",
         },
         pageData: {
-          totalItem: 0,
+          totalItem: 20,
           currentPage: 1,
           pageSize: 10,
           startItem: 0,
@@ -328,6 +370,7 @@
 
       // 添加机器资源信息
       submitCarInfo() {
+        this.carInfo.seqNo = this.carInfo.seqNoPrefix + this.carInfo.seqNoSuffix;
         this.post({
           url: "car/add",
           data: this.carInfo,
@@ -358,6 +401,8 @@
 
       // 修改机器资源信息
       updateCarInfo() {
+        this.carInfo.seqNo = this.carInfo.seqNoPrefix + this.carInfo.seqNoSuffix;
+        console.log(this.carInfo);
         this.post({
           url: "car/update",
           data: this.carInfo,
@@ -371,7 +416,19 @@
           });
       },
 
-      // 查找机器资源信息
+      seqSelectChange(value) {
+        // 根据下拉框的值修改变量carInfo对应的seqNo属性
+        console.log("seqSelectChange");
+        console.log(value);
+        if (value === "临No.") {
+          this.carInfo.seqNoPrefix = "临No.";
+        } else {
+          this.carInfo.seqNoPrefix = "No.";
+        }
+        // this.$forceUpdate(); // 强制更新组件
+      },
+
+      // 查找资源信息
       queryByPage() {
         this.loading = true;
         this.post({
@@ -381,8 +438,8 @@
           .then((response) => {
             this.loading = false;
             this.tableData = response.carInfo;
-            // this.pageData = response.page
-            // this.formatData(this.tableData)
+            this.pageData.totalItem = response.totalItem;
+            this.pageData.currentPage = 1;
           })
           .catch((error) => {
             this.loading = false;
@@ -409,8 +466,19 @@
 
       // 显示修改弹框
       showEditDialog(data) {
+        console.log("showEditDialog");
         this.isAdd = false;
         this.carInfo = JSON.parse(JSON.stringify(data)); //简单深拷贝，防止内存引用重复
+        if (
+          this.carInfo.seqNo !== null &&
+          this.carInfo.seqNo !== undefined &&
+          this.carInfo.seqNo !== "" &&
+          this.carInfo.seqNo.indexOf(".") > -1
+        ) {
+          this.$set(this.carInfo, "seqNoPrefix", this.carInfo.seqNo.split(".")[0] + ".");
+          this.$set(this.carInfo, "seqNoSuffix", this.carInfo.seqNo.split(".")[1]);
+        }
+
         this.dialogFormVisible = true;
         this.dialogTitle = "编辑";
       },
@@ -440,13 +508,18 @@
         console.log(this.select);
 
         this.loading = true;
+        this.pageData.option = this.select;
+        this.pageData.query = this.qry;
         this.post({
           url: "car/search",
-          data: { option: this.select, query: this.qry },
+          // data: { option: this.select, query: this.qry },
+          data: this.pageData,
         })
           .then((response) => {
             this.loading = false;
             this.tableData = response.carInfo;
+            this.pageData.totalItem = response.totalItem;
+            this.pageData.currentPage = 1;
           })
           .catch((error) => {
             this.loading = false;

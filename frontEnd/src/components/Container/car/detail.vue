@@ -3,9 +3,6 @@
     label-position="left"
     label-width="80px"
     class="demo-table-expand">
-    <!-- <span slot="detail" class="detail-title">
-        详情
-        </span> -->
     <el-row>
       <el-col :span="12">
         <el-form-item label="姓名"
