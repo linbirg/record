@@ -11,7 +11,7 @@ from lib.yeab.web import add_routes, add_static, load_all_of_packages
 from lib import yom as orm
 
 import logging
-logging.basicConfig(level=logging.INFO)
+logging.basicConfig(level=logging.DEBUG)
 
 from aiohttp import web
 from .session import setup

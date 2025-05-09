@@ -35,7 +35,7 @@ class CarInfo(RakeMigrate):
         self.create_table(
             't_car_info',
             fd.IntField(name='id', primary_key=True, auto_increment=True),
-            fd.UserNameField(), fd.DepartmentField(), fd.CarNoField(),
+            fd.UserNameField(), fd.DepartmentField(), fd.CarNoField(),fd.SeqNoField(),fd.RegDateField(), 
             fd.BrandField(), fd.CarLicenseField(), fd.LicenseField(),
             fd.AbbrField(), fd.UpdatedAtField(), fd.CreatedAtField())
 

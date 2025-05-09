@@ -60,7 +60,7 @@
   export default {
     data() {
       return {
-        weekCount: this.getYearWeek(new Date()),
+        weekCount: this.getYearWeek(this._get_ww_start_of(new Date())),
         startDate: this.getWWStart(),
         endDate: this.getWWEnd(),
         notes: [],
@@ -69,7 +69,7 @@
     mounted() {
       let userId = this.$store.state.userId;
       // alert(userId)
-      this.loadCurWeek(userId, this.weekCount);
+      this.loadCurWeek(userId, this.weekCount, new Date().getFullYear());
     },
     // 监听路由更新
     beforeRouteUpdate(to, from, next) {
@@ -131,10 +131,9 @@
         return wwEndOf(t);
       },
 
-      loadCurWeek(userId, weekCount, year = 2024) {
+      loadCurWeek(userId, weekCount, year = 2025) {
         // alert(userId)
-        console.log("year");
-        console.log(year);
+        console.log(year, weekCount);
         this.loading = true;
         this.post({
           url: "note/query",
@@ -152,7 +151,7 @@
         //this.weekCount = this.weekCount - 1;
         this.startDate = dateAdd(this.startDate, -7 * 24 * 60 * 60 * 1000);
         this.endDate = dateAdd(this.endDate, -7 * 24 * 60 * 60 * 1000);
-        console.log(typeof this.startDate);
+
         let userId = this.$store.state.userId;
         this.weekCount = this.getYearWeek(new Date(this.startDate));
         this.loadCurWeek(userId, this.weekCount, new Date(this.startDate).getFullYear());

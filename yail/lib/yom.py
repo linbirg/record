@@ -405,8 +405,15 @@ class Model(dict, metaclass=ModelMetaClass):
                 rs = yield from cur.fetchall()
             yield from cur.close()
             logger.LOG_DEBUG('rows returned: %s' % len(rs))
-            # print('rows returned: %s' % len(rs))
             return rs
+    
+    # added by yizr@2024.07.25
+    # @classmethod
+    # @asyncio.coroutine
+    # def page_select(cls, sql, args=None, size=10,offset=0):
+    #     page_sql = f"{sql} limit {size} offset {offset}".format(sql=sql, size=size, offset=offset)
+    #     rs = yield from cls.select(page_sql, args, size)
+    #     return rs
 
     @classmethod
     @asyncio.coroutine
@@ -433,6 +440,20 @@ class Model(dict, metaclass=ModelMetaClass):
         rs = yield from cls.select(" ".join(sql), args)
 
         return [cls.row_mapper(r) for r in rs]  # 返回的是一个实例对象引用
+    
+    # added by yizr@2024.07.26
+    @classmethod
+    @asyncio.coroutine
+    def count_where(cls, where=None, *args):
+        # 此函数不会做padding等补全操作
+        sql = [cls.__count__]
+        if where:
+            sql.append("where")
+            sql.append(where)
+
+        rs = yield from cls.select(" ".join(sql), args)
+
+        return rs[0]["count(1)"]  
 
     @classmethod
     @asyncio.coroutine

@@ -12,6 +12,7 @@ import json
 from urllib import parse
 
 import importlib
+from importlib.util import module_from_spec
 # import importlib.util
 
 from aiohttp import web
@@ -464,7 +465,9 @@ def import_module_from_spec(module_spec):
     Import the module via the passed in module specification
     Returns the newly imported module
     """
-    module = importlib.util.module_from_spec(module_spec)
+    # module = importlib.util.module_from_spec(module_spec)
+    module = module_from_spec(module_spec)
+    
 
     module_spec.loader.exec_module(module)
     return module
