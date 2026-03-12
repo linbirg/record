@@ -20,7 +20,7 @@ from .cookie_storage import ExEncryptedCookieStorage
 
 class Yeab():
     def __init__(self,
-                 host='127.0.0.1',
+                 host='0.0.0.0',
                  port=9000,
                  handlers='www.handlers',
                  filters_pkg=None):
