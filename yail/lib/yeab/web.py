@@ -118,6 +118,20 @@ def ResponseBody(coro):
     return decorator
 
 
+def stream(coro):
+    '''
+    Define decorator @stream
+    用于流式响应，返回 web.StreamResponse
+    Handler 必须自行处理请求和响应
+    '''
+    @functools.wraps(coro)
+    async def wrapper(*args, **kw):
+        return await coro(*args, **kw)
+
+    wrapper.__stream__ = True
+    return wrapper
+
+
 def get_required_kw_args(fn):
     args = []
     params = inspect.signature(fn).parameters
@@ -419,6 +433,8 @@ class RequestHandler(object):
 
         try:
             r = yield from self._func(**kw)
+            if getattr(self._func, '__stream__', False):
+                return r
             rsp = self._make_response(r, request)
             return rsp
         except APIError as e:

@@ -114,6 +114,106 @@ const actions = {
       Cookies.remove('userId')
       Cookies.remove('typeId')
     })
+  },
+
+  // 获取或创建 sessionId
+  getChatSessionId() {
+    let sessionId = localStorage.getItem('chatSessionId')
+    if (!sessionId) {
+      sessionId = 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, function(c) {
+        const r = Math.random() * 16 | 0
+        const v = c === 'x' ? r : (r & 0x3 | 0x8)
+        return v.toString(16)
+      })
+      localStorage.setItem('chatSessionId', sessionId)
+    }
+    return sessionId
+  },
+
+  // 获取聊天历史
+  async getChatHistory({ state }) {
+    const sessionId = this.dispatch('getChatSessionId')
+    return new Promise((resolve, reject) => {
+      axios({
+        method: 'post',
+        url: state.url + '/chat/history',
+        data: { userId: state.userId, sessionId }
+      }).then(response => {
+        if (response.data) {
+          resolve(response.data.messages || [])
+        } else {
+          resolve([])
+        }
+      }).catch(error => {
+        reject(error)
+      })
+    })
+  },
+
+  // 清空聊天会话
+  async clearChatSession({ state }) {
+    const sessionId = this.dispatch('getChatSessionId')
+    return new Promise((resolve, reject) => {
+      axios({
+        method: 'post',
+        url: state.url + '/chat/clear',
+        data: { userId: state.userId, sessionId }
+      }).then(response => {
+        resolve(response.data)
+      }).catch(error => {
+        reject(error)
+      })
+    })
+  },
+
+  // 发送聊天消息并接收流式响应
+  // 返回一个 Promise，通过 onChunk 回调实时推送内容
+  sendChatMessageStream({ state }, { content, onChunk, onDone, onError }) {
+    const sessionId = this.dispatch('getChatSessionId')
+    
+    fetch(state.url + '/chat/send', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ userId: state.userId, content, sessionId })
+    }).then(response => {
+      const reader = response.body.getReader()
+      const decoder = new TextDecoder()
+      let buffer = ''
+
+      const readStream = () => {
+        reader.read().then(({ done, value }) => {
+          if (done) {
+            if (onDone) onDone()
+            return
+          }
+
+          buffer += decoder.decode(value, { stream: true })
+          const lines = buffer.split('\n')
+          buffer = lines.pop()
+
+          for (const line of lines) {
+            if (line.startsWith('data: ')) {
+              try {
+                const data = JSON.parse(line.slice(6))
+                if (data.error && onError) {
+                  onError(data.error)
+                } else if (onChunk) {
+                  onChunk(data.content)
+                }
+              } catch (e) {
+                // 忽略解析错误
+              }
+            }
+          }
+
+          readStream()
+        })
+      }
+
+      readStream()
+    }).catch(error => {
+      if (onError) onError(error.message || '网络错误')
+    })
   }
 }
 

@@ -3,3 +3,4 @@ watchdog
 aiohttp>=3.7.4
 aiomysql
 cryptography
+openai>=1.0.0

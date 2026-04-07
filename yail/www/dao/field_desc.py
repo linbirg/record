@@ -186,3 +186,20 @@ class ImgsField(StringField):
 class PicPathField(StringField):
     def __init__(self, desc='图片路径'):
         super().__init__(name='path', desc=desc)
+
+
+class SessionIdField(StringField):
+    def __init__(self, desc='会话ID'):
+        super().__init__(name='session_id',
+                         primary_key=False,
+                         default=None,
+                         ddl='varchar(64)',
+                         desc=desc)
+
+
+class RoleField(CharField):
+    ROLE_USER = 'user'
+    ROLE_ASSISTANT = 'assistant'
+
+    def __init__(self, name='role', desc='角色'):
+        super().__init__(name=name, size=20, default=None, desc=desc)
