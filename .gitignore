@@ -1,0 +1,23 @@
+# Python bytecode
+*.pyc
+*.pyo
+*.pyd
+__pycache__/
+*.so
+*.egg
+*.egg-info/
+dist/
+build/
+
+# IDE
+.idea/
+.vscode/
+*.swp
+*.swo
+
+# Project specific
+yail/static/
+frontEnd/static/car/
+yail/lib/__pycache__/yom.cpython-310.pyc
+yail/lib/yeab/__pycache__/web.cpython-310.pyc
+yail/lib/yeab/__pycache__/yeab.cpython-310.pyc
