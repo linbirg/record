@@ -172,21 +172,40 @@ export default {
 </script>
 
 <style lang="scss" scoped>
+// Webflow Design System Colors
+$near-black: #080808;
+$webflow-blue: #146ef5;
+$blue-400: #3b89ff;
+$blue-hover: #0055d4;
+$gray-800: #222222;
+$gray-300: #ababab;
+$border-gray: #d8d8d8;
+$white: #ffffff;
+$gray-50: #f5f5f5;
+
+// 5-layer shadow system
+$shadow-5layer: 
+  0px 84px 24px rgba(0,0,0,0),
+  0px 54px 22px rgba(0,0,0,0.01),
+  0px 30px 18px rgba(0,0,0,0.04),
+  0px 13px 13px rgba(0,0,0,0.08),
+  0px 3px 7px rgba(0,0,0,0.09);
+
 .chat {
   display: flex;
   flex-direction: column;
   height: 100%;
   overflow: hidden;
-  background: #f5f5f5;
+  background: $white;
   
   .chat-header {
-    height: 44px;
-    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    height: 32px;
+    background: $white;
+    border-bottom: 1px solid $border-gray;
     display: flex;
     align-items: center;
     justify-content: space-between;
-    padding: 0 16px;
-    box-shadow: 0 2px 8px rgba(102, 126, 234, 0.3);
+    padding: 0 12px;
     
     .header-left {
       display: flex;
@@ -195,27 +214,28 @@ export default {
     }
     
     .logo {
-      font-size: 18px;
+      font-size: 14px;
     }
     
     .title {
-      color: #fff;
-      font-size: 15px;
-      font-weight: 600;
-      letter-spacing: 2px;
+      color: $near-black;
+      font-size: 12px;
+      font-weight: 550;
+      letter-spacing: 1.5px;
+      text-transform: uppercase;
     }
     
     .el-icon-delete {
-      color: rgba(255, 255, 255, 0.7);
+      color: $gray-300;
       cursor: pointer;
-      font-size: 16px;
-      padding: 4px;
+      font-size: 14px;
+      padding: 4px 8px;
       border-radius: 4px;
-      transition: all 0.3s;
+      transition: all 0.2s ease;
       
       &:hover {
-        color: #fff;
-        background: rgba(255, 255, 255, 0.2);
+        color: $webflow-blue;
+        transform: translate(6px);
       }
     }
   }
@@ -228,28 +248,30 @@ export default {
     display: flex;
     flex-direction: column;
     gap: 12px;
+    background: $gray-50;
     
     &::-webkit-scrollbar {
       width: 4px;
     }
     
     &::-webkit-scrollbar-thumb {
-      background: #ccc;
+      background: $border-gray;
       border-radius: 2px;
     }
     
     .welcome {
       text-align: center;
-      color: #888;
+      color: $gray-300;
       padding: 40px 20px;
       font-size: 14px;
       
       p {
-        background: #fff;
+        background: $white;
         display: inline-block;
         padding: 16px 24px;
-        border-radius: 20px;
-        box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+        border-radius: 4px;
+        border: 1px solid $border-gray;
+        box-shadow: $shadow-5layer;
       }
     }
     
@@ -261,7 +283,7 @@ export default {
       .dot {
         width: 8px;
         height: 8px;
-        background: #999;
+        background: $gray-300;
         border-radius: 50%;
         margin: 0 4px;
         animation: bounce 1.4s infinite ease-in-out both;
@@ -287,8 +309,8 @@ export default {
   }
   
   .chat-input {
-    background: #fff;
-    border-top: 1px solid #e0e0e0;
+    background: $white;
+    border-top: 1px solid $border-gray;
     padding: 8px 10px 10px;
     cursor: ns-resize;
     user-select: none;
@@ -296,43 +318,52 @@ export default {
     flex-direction: column;
     
     &.dragging {
-      background: #f0f0f0;
+      background: $gray-50;
     }
     
     .resize-handle {
       height: 4px;
       margin-bottom: 6px;
-      background: linear-gradient(90deg, transparent 0%, #ddd 20%, #ddd 80%, transparent 100%);
+      background: linear-gradient(90deg, transparent 0%, $border-gray 20%, $border-gray 80%, transparent 100%);
       border-radius: 2px;
       cursor: ns-resize;
+      transition: background 0.2s ease;
       
       &:hover {
-        background: linear-gradient(90deg, transparent 0%, #ccc 20%, #ccc 80%, transparent 100%);
+        background: linear-gradient(90deg, transparent 0%, $gray-300 20%, $gray-300 80%, transparent 100%);
       }
     }
     
     textarea {
       width: 100%;
       height: 100%;
-      border: none;
+      border: 1px solid $border-gray;
       outline: none;
       resize: none;
-      padding: 10px;
+      padding: 10px 12px;
       font-size: 14px;
+      font-weight: 400;
       font-family: inherit;
       line-height: 1.5;
       box-sizing: border-box;
-      background: #f5f5f5;
+      background: $gray-50;
+      color: $near-black;
       border-radius: 4px;
+      transition: all 0.2s ease;
       
       &:focus {
-        background: #fff;
-        box-shadow: 0 0 0 1px #50a2f2;
+        background: $white;
+        border-color: $webflow-blue;
+      }
+      
+      &::placeholder {
+        color: $gray-300;
       }
       
       &:disabled {
-        background: #f0f0f0;
+        background: $gray-50;
         cursor: not-allowed;
+        color: $gray-300;
       }
     }
   }

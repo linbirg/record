@@ -11,14 +11,10 @@
             "id": "8be6e263d549f436",
             "type": "leaf",
             "state": {
-              "type": "markdown",
-              "state": {
-                "file": "_raw/record/ai_chat_design.md",
-                "mode": "preview",
-                "source": false
-              },
+              "type": "empty",
+              "state": {},
               "icon": "lucide-file",
-              "title": "ai_chat_design"
+              "title": "新标签页"
             }
           }
         ]
@@ -94,7 +90,6 @@
             "state": {
               "type": "backlink",
               "state": {
-                "file": "_raw/record/ai_chat_design.md",
                 "collapseAll": false,
                 "extraContext": false,
                 "sortOrder": "alphabetical",
@@ -104,7 +99,7 @@
                 "unlinkedCollapsed": true
               },
               "icon": "links-coming-in",
-              "title": "ai_chat_design 的反向链接列表"
+              "title": "反向链接"
             }
           },
           {
@@ -113,12 +108,11 @@
             "state": {
               "type": "outgoing-link",
               "state": {
-                "file": "_raw/record/ai_chat_design.md",
                 "linksCollapsed": false,
                 "unlinkedCollapsed": true
               },
               "icon": "links-going-out",
-              "title": "ai_chat_design 的出链列表"
+              "title": "出链"
             }
           },
           {
@@ -156,13 +150,12 @@
             "state": {
               "type": "outline",
               "state": {
-                "file": "_raw/record/ai_chat_design.md",
                 "followCursor": false,
                 "showSearch": false,
                 "searchQuery": ""
               },
               "icon": "lucide-list",
-              "title": "ai_chat_design 的大纲"
+              "title": "大纲"
             }
           }
         ]
@@ -184,5 +177,37 @@
     }
   },
   "active": "8be6e263d549f436",
-  "lastOpenFiles": []
+  "lastOpenFiles": [
+    "_wiki/concepts/ai-chat-webflow.md",
+    "_raw/sources/design/ai-chat-webflow/SKILL.md",
+    "_raw/sources/design/ai-chat-webflow",
+    "_wiki/tags/ai-chat.md",
+    "_wiki/tags/sse.md",
+    "_wiki/tags/ui.md",
+    "_wiki/summaries/ai-chat-summary.md",
+    "_wiki/concepts/ai-chat-design.md",
+    "_raw/record/ai_chat_design.md",
+    "_raw/sources/design/claude/README.md",
+    "_raw/sources/design/claude/preview.html",
+    "_raw/sources/design/claude/preview-dark.html",
+    "_raw/sources/design/webflow/preview.html",
+    "_raw/sources/design/webflow/README.md",
+    "_raw/sources/design/claude/DESIGN.md",
+    "_raw/sources/design/webflow/DESIGN.md",
+    "_raw/sources/design/webflow/preview-dark.html",
+    "_raw/sources/design/claude",
+    "_raw/sources/design/webflow",
+    "_raw/sources/design",
+    "_raw/sources/record/ai_chat_design.md",
+    "_raw/sources/record",
+    "_raw/sources",
+    "_raw/design/webflow/README.md",
+    "_raw/design/webflow/DESIGN.md",
+    "_wiki/index.md",
+    "_wiki/summaries/ai-chat-design-summary.md",
+    "_wiki/log.md",
+    "_raw/registry.md",
+    "_raw/design/claude/README.md",
+    "_raw/design/claude/DESIGN.md"
+  ]
 }

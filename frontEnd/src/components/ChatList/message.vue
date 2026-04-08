@@ -61,6 +61,27 @@ export default {
 </script>
 
 <style lang="scss" scoped>
+// Webflow Design System Colors
+$near-black: #080808;
+$webflow-blue: #146ef5;
+$blue-400: #3b89ff;
+$gray-800: #222222;
+$gray-300: #ababab;
+$border-gray: #d8d8d8;
+$white: #ffffff;
+$gray-50: #f5f5f5;
+
+// 5-layer shadow system
+$shadow-5layer: 
+  0px 84px 24px rgba(0,0,0,0),
+  0px 54px 22px rgba(0,0,0,0.01),
+  0px 30px 18px rgba(0,0,0,0.04),
+  0px 13px 13px rgba(0,0,0,0.08),
+  0px 3px 7px rgba(0,0,0,0.09);
+
+// Light shadow for user bubble
+$shadow-light: 0px 2px 8px rgba(0, 0, 0, 0.08);
+
 .message-bubble {
   display: flex;
   flex-direction: column;
@@ -71,14 +92,18 @@ export default {
     align-items: flex-end;
     
     .bubble {
-      background: #50a2f2;
-      color: #fff;
-      border-radius: 8px 8px 0 8px;
+      background: $webflow-blue;
+      color: $white;
+      border-radius: 4px;
+      box-shadow: $shadow-light;
     }
     
     .time {
       margin-right: 8px;
       margin-top: 4px;
+      color: $gray-300;
+      font-size: 12px;
+      font-weight: 400;
     }
   }
   
@@ -87,26 +112,29 @@ export default {
     align-items: flex-start;
     
     .bubble {
-      background: #fff;
-      color: #333;
-      border-radius: 8px 8px 8px 0;
-      box-shadow: 0 1px 4px rgba(0, 0, 0, 0.1);
+      background: $white;
+      color: $near-black;
+      border: 1px solid $border-gray;
+      border-radius: 4px;
+      box-shadow: $shadow-5layer;
       
       ::v-deep {
         code {
-          background: #f0f0f0;
+          background: $gray-50;
           padding: 2px 6px;
           border-radius: 4px;
           font-family: Consolas, Monaco, monospace;
           font-size: 13px;
+          font-weight: 400;
         }
         
         pre {
-          background: #f6f8fa;
+          background: $gray-50;
           padding: 12px;
-          border-radius: 6px;
+          border-radius: 4px;
           overflow-x: auto;
           margin: 8px 0;
+          border: 1px solid $border-gray;
           
           code {
             background: none;
@@ -129,7 +157,7 @@ export default {
         }
         
         a {
-          color: #50a2f2;
+          color: $webflow-blue;
         }
       }
     }
@@ -137,6 +165,9 @@ export default {
     .time {
       margin-left: 8px;
       margin-top: 4px;
+      color: $gray-300;
+      font-size: 12px;
+      font-weight: 400;
     }
   }
   
@@ -144,12 +175,8 @@ export default {
     padding: 12px 16px;
     line-height: 1.5;
     font-size: 14px;
+    font-weight: 400;
     word-break: break-all;
-  }
-  
-  .time {
-    font-size: 12px;
-    color: #999;
   }
 }
 </style>
