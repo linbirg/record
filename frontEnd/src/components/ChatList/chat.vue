@@ -13,8 +13,8 @@
         <p>👋 Aloha! 我是 ALOHA，有什么可以帮你的？</p>
       </div>
       <message
-        v-for="(msg, index) in messages"
-        :key="index"
+        v-for="msg in messages"
+        :key="msg.id"
         :message="msg"
         :isUser="msg.role === 'user'"
       />
@@ -43,6 +43,7 @@
 </template>
 
 <script>
+import Vue from 'vue'
 import Message from './message'
 
 export default {
@@ -61,7 +62,8 @@ export default {
       maxHeight: 160,
       isDragging: false,
       startY: 0,
-      startHeight: 0
+      startHeight: 0,
+      msgIdCounter: Date.now()
     }
   },
   created() {
@@ -76,6 +78,7 @@ export default {
       this.inputContent = ''
       
       const userMessage = {
+        id: this.msgIdCounter++,
         role: 'user',
         content: content,
         createdAt: new Date().toISOString()
@@ -85,19 +88,30 @@ export default {
       
       this.loading = true
       
-      let aiContent = ''
-      const aiMessage = {
+      this.messages.push({
+        id: this.msgIdCounter++,
         role: 'assistant',
         content: '',
+        reasoning_content: '',
         createdAt: new Date().toISOString()
-      }
-      this.messages.push(aiMessage)
+      })
       
-      this.$store.dispatch('sendChatMessageStream', {
+this.$store.dispatch('sendChatMessageStream', {
         content: content,
-        onChunk: (chunk) => {
-          aiContent = chunk
-          aiMessage.content = chunk
+        onChunk: (data) => {
+          const lastMsg = this.messages[this.messages.length - 1]
+          
+          if (typeof data === 'string') {
+            lastMsg.content = data
+          } else {
+            if (data.reasoning_content !== undefined) {
+              lastMsg.reasoning_content = data.reasoning_content
+            }
+            if (data.content !== undefined) {
+              lastMsg.content = data.content
+            }
+          }
+          this.$forceUpdate()
           this.scrollToBottom()
         },
         onDone: () => {
@@ -105,7 +119,10 @@ export default {
         },
         onError: (error) => {
           this.loading = false
-          aiMessage.content = '抱歉，发生了错误：' + error
+          const lastMsg = this.messages[this.messages.length - 1]
+          lastMsg.content = '抱歉，发生了错误：' + error
+          lastMsg.reasoning_content = ''
+          this.$forceUpdate()
           this.scrollToBottom()
         }
       })
@@ -114,11 +131,13 @@ export default {
       try {
         const history = await this.$store.dispatch('getChatHistory')
         if (history && history.length > 0) {
-          this.messages = history.map(msg => ({
+          this.messages = history.map((msg, idx) => ({
+            id: this.msgIdCounter + idx,
             role: msg.role,
             content: msg.content,
             createdAt: msg.createdAt
           }))
+          this.msgIdCounter += history.length
         }
       } catch (error) {
         console.error('加载历史记录失败:', error)

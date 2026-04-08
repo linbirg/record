@@ -1,5 +1,12 @@
 <template>
   <div :class="['message-bubble', isUser ? 'user' : 'ai']">
+    <div v-if="!isUser && hasReasoning" class="reasoning-wrapper">
+      <div class="reasoning-toggle" @click="toggleReasoning">
+        <span class="toggle-icon">{{ isReasoningExpanded ? '▼' : '▶' }}</span>
+        <span class="toggle-text">{{ isReasoningExpanded ? '收起思考过程' : '展开思考过程' }}</span>
+      </div>
+      <div v-show="isReasoningExpanded" class="reasoning-content" v-html="renderedReasoning"></div>
+    </div>
     <div class="bubble" v-html="renderedContent"></div>
     <span class="time">{{ formatTime(message.createdAt) }}</span>
   </div>
@@ -35,17 +42,49 @@ export default {
       default: false
     }
   },
+  data() {
+    return {
+      isReasoningExpanded: false
+    }
+  },
   computed: {
+    hasReasoning() {
+      return this.message.reasoning_content && this.message.reasoning_content.length > 0
+    },
     renderedContent() {
       if (this.isUser) {
         return DOMPurify.sanitize(this.escapeHtml(this.message.content))
       }
+      if (!this.message.content) return ''
       const html = marked.parse(this.message.content)
       return DOMPurify.sanitize(html)
+    },
+    renderedReasoning() {
+      if (!this.message.reasoning_content) return ''
+      return DOMPurify.sanitize(this.escapeHtml(this.message.reasoning_content))
+    }
+  },
+  watch: {
+    'message.reasoning_content': {
+      handler(newVal) {
+        if (newVal && newVal.length > 0) {
+          this.isReasoningExpanded = true
+        }
+      },
+      immediate: true
+    },
+    'message.content': {
+      handler() {
+        this.$forceUpdate()
+      }
     }
   },
   methods: {
+    toggleReasoning() {
+      this.isReasoningExpanded = !this.isReasoningExpanded
+    },
     escapeHtml(text) {
+      if (!text) return ''
       const div = document.createElement('div')
       div.textContent = text
       return div.innerHTML
@@ -110,6 +149,48 @@ $shadow-light: 0px 2px 8px rgba(0, 0, 0, 0.08);
   &.ai {
     align-self: flex-start;
     align-items: flex-start;
+    
+    .reasoning-wrapper {
+      width: 100%;
+      margin-bottom: 8px;
+    }
+    
+    .reasoning-toggle {
+      display: flex;
+      align-items: center;
+      gap: 4px;
+      padding: 4px 8px;
+      font-size: 12px;
+      color: $gray-300;
+      cursor: pointer;
+      border-radius: 4px;
+      transition: all 0.2s ease;
+      user-select: none;
+      
+      &:hover {
+        color: $webflow-blue;
+        background: rgba($webflow-blue, 0.05);
+      }
+      
+      .toggle-icon {
+        font-size: 10px;
+      }
+      
+      .toggle-text {
+        font-weight: 400;
+      }
+    }
+    
+    .reasoning-content {
+      background: $gray-50;
+      border: 1px solid $border-gray;
+      border-radius: 4px;
+      padding: 8px 12px;
+      font-size: 12px;
+      color: $gray-800;
+      line-height: 1.5;
+      margin-top: 4px;
+    }
     
     .bubble {
       background: $white;

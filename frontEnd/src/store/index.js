@@ -132,7 +132,7 @@ const actions = {
 
   // 获取聊天历史
   async getChatHistory({ state }) {
-    const sessionId = this.dispatch('getChatSessionId')
+    const sessionId = await this.dispatch('getChatSessionId')
     return new Promise((resolve, reject) => {
       axios({
         method: 'post',
@@ -152,7 +152,7 @@ const actions = {
 
   // 清空聊天会话
   async clearChatSession({ state }) {
-    const sessionId = this.dispatch('getChatSessionId')
+    const sessionId = await this.dispatch('getChatSessionId')
     return new Promise((resolve, reject) => {
       axios({
         method: 'post',
@@ -169,7 +169,15 @@ const actions = {
   // 发送聊天消息并接收流式响应
   // 返回一个 Promise，通过 onChunk 回调实时推送内容
   sendChatMessageStream({ state }, { content, onChunk, onDone, onError }) {
-    const sessionId = this.dispatch('getChatSessionId')
+    let sessionId = localStorage.getItem('chatSessionId')
+    if (!sessionId) {
+      sessionId = 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, function(c) {
+        const r = Math.random() * 16 | 0
+        const v = c === 'x' ? r : (r & 0x3 | 0x8)
+        return v.toString(16)
+      })
+      localStorage.setItem('chatSessionId', sessionId)
+    }
     
     fetch(state.url + '/chat/send', {
       method: 'POST',
@@ -198,7 +206,7 @@ const actions = {
                 if (data.error && onError) {
                   onError(data.error)
                 } else if (onChunk) {
-                  onChunk(data.content)
+                  onChunk(data)
                 }
               } catch (e) {
                 // 忽略解析错误
