@@ -56,6 +56,7 @@ class _logger:
 
         self.LEVEL_NONE = 7
 
+        self._log_file = None
         self.level_info = (
             ('!<', sys.stderr),
             ('DEBUG', sys.stderr),
@@ -77,7 +78,7 @@ class _logger:
 
         self.thread_local = None
 
-        self.cur_output_level = 2
+        self.cur_output_level = 1  # DEBUG
 
     def set_log_file(self, std_file, greater_level_files={}
                      ):  # {LEVEL_ANNOUNCE : fd_a, LEVEL_WARNING : fd_wf }
@@ -136,6 +137,24 @@ class _logger:
         self.thread_local.tid = threading.current_thread(
         ).ident  # TODO: better change to thread_id.
 
+    def _init_log_file(self):
+        if self._log_file is not None:
+            return
+        log_dir = os.path.expanduser('~/.chat_sessions/logs')
+        os.makedirs(log_dir, exist_ok=True)
+        log_file = os.path.join(log_dir, 'yail.log')
+        self._log_file = open(log_file, 'a', encoding=default_encoding)
+        self.level_info = (
+            ('!<', (sys.stderr, self._log_file)),
+            ('DEBUG', (sys.stderr, self._log_file)),
+            ('TRACE', (sys.stderr, self._log_file)),
+            ('INFO', (sys.stderr, self._log_file)),
+            ('ANNOUNCE', (sys.stderr, self._log_file)),
+            ('WARNING', (sys.stderr, self._log_file)),
+            ('FATAL', (sys.stderr, self._log_file)),
+            ('>!', (sys.stderr, self._log_file)),
+        )
+
     def log_output(self,
                    code_file,
                    code_func,
@@ -144,24 +163,24 @@ class _logger:
                    thetime,
                    msg,
                    trace_no=None):
+        if self._log_file is None:
+            self._init_log_file()
         trace_no = self.get_trace_no() if trace_no is None else trace_no
         #tid = self.get_tid()
         ptid_str = self.get_ptid_str()
-        f_out = self.level_info[level][1]
-        #out_str = '[%s][%s:%d(%s)][%s:%.05f][%d][%d]%s\n' % \
-        #        (self.level_info[level][0], code_file, code_line, code_func, \
-        #         time.strftime('%Y%m%d %H:%M:%S', time.localtime(thetime)), thetime, tid, trace_no, msg)
-        #out_str = '[%s][%s:%d(%s)][%s][%d][%d]%s\n' % \
-        #        (self.level_info[level][0], code_file, code_line, code_func, \
-        #         time.strftime('%Y%m%d %H:%M:%S', time.localtime(thetime)), tid, trace_no, msg)
+        outputs = self.level_info[level][1]
+        if not isinstance(outputs, tuple):
+            outputs = (outputs,)
         out_str = '[%s][%s:%d(%s)][%s][%s][%d]%s\n' % \
                 (self.level_info[level][0], code_file, code_line, code_func, \
                  time.strftime('%Y%m%d %H:%M:%S', time.localtime(thetime)), ptid_str, trace_no, msg)
-        if f_out.encoding is None and isinstance(out_str, str):
-            out_str = out_str.encode(default_encoding)
-        #print >>f_out, out_str
-        f_out.write(out_str)
-        f_out.flush()
+        for f_out in outputs:
+            if f_out is None:
+                continue
+            if f_out.encoding is None and isinstance(out_str, str):
+                out_str = out_str.encode(default_encoding)
+            f_out.write(out_str)
+            f_out.flush()
 
     def _LOG_(self, level, msg, args, nframe=1):
         if level < self.cur_output_level:

@@ -5,7 +5,7 @@ ROOT = 'D:/project/linbirg/ww/ww/record/yail'
 PIC_DIR = 'D:/project/linbirg/ww/ww/record/frontEnd/static/car'
 PIC_URL = 'static/car'
 
-OPENAI_API_KEY = 'your-api-key'
+OPENAI_API_KEY = 'sk-cp-_Qe8NJYog4n9mVCAxjfA6x3LHZ1Ot8hKAiEt732QKxkWga6T-NTRGqNUG9m4xdXqJ1A97rJbSBP8vv3_Df8qZPdO9Z40d3LbALY1U_cIDS7w2kCgE6UtZ_k'
 OPENAI_BASE_URL = 'https://api.minimax.chat/v1'
 OPENAI_MODEL = 'MiniMax-M2.7'
 OPENAI_MAX_HISTORY = 20

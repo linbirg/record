@@ -9,6 +9,7 @@ Chat Handler - 聊天处理器
 - L5 Auto Summarization
 - 4类记忆系统
 - 全局上下文管理
+- MiniMax API
 """
 
 from lib.yeab.web import post, stream, ResponseBody
@@ -16,6 +17,7 @@ from aiohttp import web
 import asyncio
 import json
 import openai
+from openai import AsyncOpenAI
 
 from www.dao.chat_message import ChatMessage
 from conf import dev as conf
@@ -36,6 +38,43 @@ from .message_store import create_message_store
 from .global_context import global_context_manager
 from .memory_store import memory_store
 from .memory_types import Memory, MemoryType, MemoryScope
+
+
+logger.LOG_INFO("[chat] module loaded")
+
+from www.dao.chat_message import ChatMessage
+from conf import dev as conf
+from www.common.message import Message
+from lib import logger
+
+from .session_manager import (
+    generate_session_id,
+    init_global_structure,
+    init_session_structure,
+    session_exists,
+    check_summarization_needed,
+    check_summarization_debounce,
+    run_summarization,
+    estimate_tokens,
+)
+from .message_store import create_message_store
+from .global_context import global_context_manager
+from .memory_store import memory_store
+from .memory_types import Memory, MemoryType, MemoryScope
+
+
+_client = None
+
+
+def get_openai_client() -> AsyncOpenAI:
+    """获取或创建 OpenAI 客户端（MiniMax 兼容）"""
+    global _client
+    if _client is None:
+        _client = AsyncOpenAI(
+            api_key=conf.OPENAI_API_KEY,
+            base_url=conf.OPENAI_BASE_URL,
+        )
+    return _client
 
 
 _session_initialized = False
@@ -125,7 +164,7 @@ async def chat_send_real(request):
 
         await resp.write(f"event: done\ndata: \n\n".encode('utf-8'))
     except Exception as e:
-        logger.error(f"Chat error: {e}")
+        logger.LOG_FATAL(f"Chat error: {e}")
         error_data = json.dumps({'error': str(e)}, ensure_ascii=False)
         await resp.write(f"event: error\ndata: {error_data}\n\n".encode('utf-8'))
 
@@ -135,33 +174,80 @@ async def chat_send_real(request):
 
 async def call_llm_stream(context: dict) -> dict:
     """
-    调用 LLM 流式 API（placeholder）
-    后续需要集成真实的 MiniMax API
+    调用 MiniMax 流式 API
+    MiniMax API 与 OpenAI 兼容
     """
     messages = context.get('messages', [])
-    user_content = messages[-1]['content'] if messages else ''
+    session_id = context.get('session_id')
+    user_id = context.get('user_id')
+    global_context = context.get('global_context', '')
 
-    reasoning_content = "让我思考一下这个问题..."
+    logger.LOG_INFO(f"[call_llm_stream] session_id={session_id}, messages_count={len(messages)}")
+
+    openai_messages = []
+
+    if global_context:
+        openai_messages.append({
+            'role': 'system',
+            'content': f"""你是 ALOHA，一个有帮助的 AI 助手。
+
+{global_context}
+
+请用中文回答用户的问题。"""
+        })
+
+    for msg in messages:
+        role = msg.get('role', 'user')
+        content = msg.get('content', '')
+        if role == 'user':
+            openai_messages.append({'role': 'user', 'content': content})
+        elif role == 'assistant':
+            openai_messages.append({'role': 'assistant', 'content': content})
+
+    logger.LOG_INFO(f"[call_llm_stream] model={conf.OPENAI_MODEL}, messages_to_send={len(openai_messages)}")
+
+    client = get_openai_client()
     full_reasoning = ""
-    for chunk in generate_chunks(reasoning_content, chunk_size=5):
-        full_reasoning += chunk
-        yield {'reasoning_content': full_reasoning, 'content': ''}
-        await asyncio.sleep(0.05)
-
-    await asyncio.sleep(0.2)
-
-    response = f"你已经说了: {user_content}\n\n这是一个模拟回复。后续将集成真实的 MiniMax API。"
     full_content = ""
-    for chunk in generate_chunks(response, chunk_size=10):
-        full_content += chunk
-        yield {'reasoning_content': full_reasoning, 'content': full_content}
-        await asyncio.sleep(0.03)
 
-    msg_store = create_message_store(context['session_id'])
-    msg_store.save_assistant_message(
-        content=full_content,
-        reasoning_content=full_reasoning,
-    )
+    try:
+        response = await client.chat.completions.create(
+            model=conf.OPENAI_MODEL,
+            messages=openai_messages,
+            stream=True,
+        )
+
+        logger.LOG_INFO(f"[call_llm_stream] stream response received, type={type(response)}")
+
+        async for chunk in response:
+            if not chunk.choices:
+                logger.LOG_TRACE(f"[call_llm_stream] no choices in chunk: {chunk}")
+                continue
+
+            delta = chunk.choices[0].delta
+            logger.LOG_TRACE(f"[call_llm_stream] delta attrs: {dir(delta)}")
+
+            if hasattr(delta, 'reasoning_content') and delta.reasoning_content:
+                full_reasoning = delta.reasoning_content
+                yield {'reasoning_content': full_reasoning, 'content': full_content}
+
+            if hasattr(delta, 'content') and delta.content:
+                full_content += delta.content
+                yield {'reasoning_content': full_reasoning, 'content': full_content}
+
+        logger.LOG_INFO(f"[call_llm_stream] stream complete, content_length={len(full_content)}")
+
+        msg_store = create_message_store(session_id)
+        msg_store.save_assistant_message(
+            content=full_content,
+            reasoning_content=full_reasoning,
+        )
+
+    except Exception as e:
+        logger.LOG_FATAL(f"MiniMax API error: {e}")
+        import traceback
+        logger.LOG_FATAL(f"Traceback: {traceback.format_exc()}")
+        raise e
 
 
 def generate_chunks(text: str, chunk_size: int = 5) -> list:
@@ -173,8 +259,71 @@ def generate_chunks(text: str, chunk_size: int = 5) -> list:
 @stream
 async def chat_send(request):
     """
-    聊天发送入口（Mock/Real 切换）
-    目前默认使用 mock_chat.py
+    聊天发送入口 - 使用真实 MiniMax API
+    """
+    logger.LOG_INFO("[chat_send] called")
+    ensure_sessions_initialized()
+
+    data = await request.json()
+    logger.LOG_INFO(f"[chat_send] data={data}")
+    user_id = str(data.get('userId', 'anonymous'))
+    content = data.get('content', '')
+    session_id = data.get('sessionId')
+
+    logger.LOG_INFO(f"[chat_send] user_id={user_id}, content={content[:50]}..., session_id={session_id}")
+
+    if not session_id:
+        session_id = generate_session_id(user_id)
+        logger.LOG_INFO(f"[chat_send] generated new session_id={session_id}")
+
+    ensure_session_exists(session_id, user_id)
+
+    msg_store = create_message_store(session_id)
+    msg_store.save_user_message(content, {'user_id': user_id})
+    logger.LOG_INFO(f"[chat_send] user message saved, message_count={msg_store.get_message_count()}")
+
+    messages = msg_store.load_messages()
+    logger.LOG_INFO(f"[chat_send] loaded {len(messages)} messages")
+
+    resp = web.StreamResponse(
+        status=200,
+        reason='OK',
+        headers={
+            'Content-Type': 'text/event-stream',
+            'Cache-Control': 'no-cache',
+            'Connection': 'keep-alive',
+            'X-Accel-Buffering': 'no',
+        }
+    )
+    await resp.prepare(request)
+
+    context = {
+        'session_id': session_id,
+        'user_id': user_id,
+        'messages': messages,
+        'global_context': global_context_manager.build_user_profile_prompt(),
+    }
+
+    try:
+        async for chunk in call_llm_stream(context):
+            event_data = json.dumps(chunk, ensure_ascii=False)
+            await resp.write(f"event: chunk\ndata: {event_data}\n\n".encode('utf-8'))
+
+        await resp.write(f"event: done\ndata: \n\n".encode('utf-8'))
+    except Exception as e:
+        logger.LOG_FATAL(f"Chat error: {e}")
+        error_data = json.dumps({'error': str(e)}, ensure_ascii=False)
+        await resp.write(f"event: error\ndata: {error_data}\n\n".encode('utf-8'))
+
+    await resp.write_eof()
+    return resp
+
+
+@post("/chat/send_mock")
+@stream
+async def chat_send_mock(request):
+    """
+    聊天发送入口 - 使用 Mock
     """
     ensure_sessions_initialized()
 
