@@ -2,6 +2,42 @@
 
 ## 2026-04-08
 
+### compile
+
+- [compile] sources/ai-agents/claude-code-prompt-system.md → concepts/claude-code-prompt-system.md
+- [compile] sources/ai-agents/claude-code-harness-analysis.md → concepts/claude-code-harness.md
+- [compile] sources/design/ai-chat-webflow/ai_chat_context_management.md → entities/ai-chat-context-management.md
+- [compile] sources/design/ai-chat-webflow/ai_chat_design.md → entities/ai-chat-design.md
+- [update] _wiki/index.md
+- [update] _raw/registry.md
+
+### 内容更新
+
+- [create] Claude Code Prompt System 概念页
+- [create] Claude Code Harness Architecture 概念页
+- [create] AI Chat Context Management 实体页
+- [create] AI Chat Context Management Summary 摘要页
+- [delete] sources/design/ai-chat-webflow/SKILL.md (已合并)
+
+### 设计文档
+
+- [create] sources/design/ai-chat-webflow/ai_chat_context_management.md (AI Chat 上下文管理系统设计)
+- [create] sources/ai-agents/claude-code-prompt-system.md (Claude Code 提示词系统)
+- [create] sources/ai-agents/claude-code-harness-analysis.md (Claude Code Harness 分析)
+
+### 设计方案完善
+
+- [update] ai_chat_context_management.md - 增加工具调用追踪字段
+- [update] ai_chat_context_management.md - 细粒度摘要触发条件
+- [update] ai_chat_context_management.md - 增加 Claude Code 对比章节
+- [update] ai_chat_context_management.md - 完善摘要 Prompt
+
+---
+
+## 历史记录
+
+### 2026-04-08 (早期)
+
 - [compile] sources/record/ai_chat_design.md
 - [move] record, design → sources/
 - [recompile] 重组 wiki 结构

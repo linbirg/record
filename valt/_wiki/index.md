@@ -9,10 +9,10 @@ description: 全局索引
 
 | 类型 | 数量 |
 |------|------|
-| Entities | 0 |
-| Concepts | 1 |
-| Summaries | 1 |
-| Tags | 3 |
+| Entities | 2 |
+| Concepts | 3 |
+| Summaries | 2 |
+| Tags | 8 |
 
 ---
 
@@ -22,6 +22,16 @@ description: 全局索引
 |------|------|----------|
 | [[ai-chat-design]] | ui, ai, chat, sse, stream, vue, yeab | 2026-04-08 |
 | [[ai-chat-webflow]] | ui, webflow, design, chat | 2026-04-08 |
+| [[claude-code-prompt-system]] | agent, prompt, llm, claude | 2026-04-08 |
+| [[claude-code-harness]] | agent, harness, claude, architecture | 2026-04-08 |
+
+---
+
+## Entities (实体页)
+
+| 页面 | 标签 | 更新日期 |
+|------|------|----------|
+| [[ai-chat-context-management]] | ai, chat, context, memory, vue, yeab | 2026-04-08 |
 
 ---
 
@@ -30,6 +40,7 @@ description: 全局索引
 | 页面 | 标签 | 更新日期 |
 |------|------|----------|
 | [[ai-chat-summary]] | ui, ai, chat | 2026-04-08 |
+| [[ai-chat-context-management-summary]] | ai, chat, context, memory | 2026-04-08 |
 
 ---
 
@@ -37,13 +48,23 @@ description: 全局索引
 
 | 标签 | 页面数 |
 |------|--------|
+| [[ai]] | 4 |
+| [[chat]] | 3 |
 | [[ui]] | 2 |
 | [[sse]] | 2 |
-| [[ai-chat]] | 3 |
-| [[chat]] | 2 |
 | [[stream]] | 1 |
 | [[vue]] | 1 |
 | [[yeab]] | 1 |
+| [[agent]] | 2 |
+| [[prompt]] | 1 |
+| [[llm]] | 1 |
+| [[claude]] | 2 |
+| [[harness]] | 1 |
+| [[architecture]] | 1 |
+| [[memory]] | 2 |
+| [[context]] | 2 |
+| [[webflow]] | 1 |
+| [[design]] | 1 |
 
 ---
 
@@ -52,6 +73,19 @@ description: 全局索引
 | 文件 | 状态 |
 |------|------|
 | sources/record/ai_chat_design.md | compiled |
-| sources/design/ai-chat-webflow/SKILL.md | compiled |
-| sources/design/claude/DESIGN.md | pending |
-| sources/design/webflow/DESIGN.md | pending |
+| sources/design/ai-chat-webflow/ai_chat_design.md | compiled |
+| sources/design/ai-chat-webflow/ai_chat_context_management.md | compiled |
+| sources/ai-agents/claude-code-prompt-system.md | compiled |
+| sources/ai-agents/claude-code-harness-analysis.md | compiled |
+
+---
+
+## 主题覆盖表
+
+| 主题 | 相关页面 |
+|------|----------|
+| AI Chat 前端 | [[ai-chat-design]], [[ai-chat-webflow]], [[ai-chat-context-management]] |
+| Agent 架构 | [[claude-code-prompt-system]], [[claude-code-harness]] |
+| 上下文管理 | [[ai-chat-context-management]], [[ai-chat-context-management-summary]] |
+| Prompt 工程 | [[claude-code-prompt-system]] |
+| Harness 设计 | [[claude-code-harness]] |
