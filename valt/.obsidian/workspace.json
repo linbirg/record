@@ -185,7 +185,13 @@
   },
   "active": "8be6e263d549f436",
   "lastOpenFiles": [
+    "_raw/sources/ai-agents/claude-code-source-analysis.md",
+    "_raw/sources/ai-agents/claude-code-source-analysis-v2.md",
     "_raw/sources/ai-agents/claude-code-prompt-system.md",
+    "_raw/sources/ai-agents/Claude Code 源码深度技术分析.md",
+    "_wiki/concepts/claude-code-source-analysis.md",
+    "_raw/sources/design/ai-chat-webflow/ai_chat_context_management.md",
+    "_raw/sources/ai-agents/Claude Code 源码深度技术分析.docx",
     "_wiki/summaries/ai-chat-context-management-summary.md",
     "_wiki/entities/ai-chat-context-management.md",
     "_wiki/concepts/claude-code-harness.md",
@@ -193,7 +199,6 @@
     "_raw/sources/ai-agents/claude-code-harness-analysis.md",
     "_raw/sources/design/ai-chat-webflow/SKILL.md",
     "_raw/sources/ai-agents",
-    "_raw/sources/design/ai-chat-webflow/ai_chat_context_management.md",
     "_raw/sources/design/ai-chat-webflow/ai_chat_design.md",
     "_raw/sources/record/ai_chat_design.md",
     "_wiki/concepts/ai-chat-webflow.md",
@@ -215,11 +220,6 @@
     "_raw/sources/design/claude",
     "_raw/sources/design/webflow",
     "_raw/sources/design",
-    "_raw/sources/record",
-    "_raw/design/webflow/README.md",
-    "_raw/design/webflow/DESIGN.md",
-    "_wiki/index.md",
-    "_wiki/summaries/ai-chat-design-summary.md",
-    "_wiki/log.md"
+    "_raw/design/webflow/README.md"
   ]
 }

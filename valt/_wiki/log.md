@@ -1,5 +1,20 @@
 # Wiki Log
 
+## 2026-04-09
+
+### ingest
+
+- [ingest] sources/ai-agents/Claude Code 源码深度技术分析.docx → claude-code-source-analysis.md
+- [convert] docx to markdown using Python zipfile + XML parsing
+
+### compile
+
+- [compile] sources/ai-agents/claude-code-source-analysis.md → concepts/claude-code-source-analysis.md
+- [update] _wiki/index.md
+- [update] _raw/registry.md
+
+---
+
 ## 2026-04-08
 
 ### compile
