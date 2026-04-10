@@ -195,7 +195,7 @@ class LLMSummarizer:
             
             logger.LOG_INFO(f"[LLMSummarizer] ===== RAW LLM RESPONSE =====")
             logger.LOG_INFO(f"[LLMSummarizer] response length={len(content)}")
-            logger.LOG_INFO(f"[LLMSummarizer] response content:\n{content[:1000]}")
+            logger.LOG_INFO(f"[LLMSummarizer] response content:\n{content}")
             logger.LOG_INFO(f"[LLMSummarizer] ===== END RAW RESPONSE =====")
             
             json_str = self._extract_json(content)
