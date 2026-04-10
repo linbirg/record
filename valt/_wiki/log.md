@@ -1,5 +1,24 @@
 # Wiki Log
 
+## 2026-04-10
+
+### ingest
+
+- [ingest] sources/design/ai-chat-webflow/ai_chat_context_update_design.md
+
+### compile
+
+- [compile] sources/design/ai-chat-webflow/ai_chat_context_update_design.md → summaries/ai-chat-context-update-design-summary.md
+- [update] _wiki/index.md
+- [update] _raw/registry.md
+
+### lint
+
+- [check] 12 wiki links verified, 0 broken links
+- [update] tags/ai-chat.md (add new summary reference)
+
+---
+
 ## 2026-04-09
 
 ### ingest

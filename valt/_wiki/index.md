@@ -11,7 +11,7 @@ description: 全局索引
 |------|------|
 | Entities | 2 |
 | Concepts | 4 |
-| Summaries | 2 |
+| Summaries | 3 |
 | Tags | 10 |
 
 ---
@@ -42,6 +42,7 @@ description: 全局索引
 |------|------|----------|
 | [[ai-chat-summary]] | ui, ai, chat | 2026-04-08 |
 | [[ai-chat-context-management-summary]] | ai, chat, context, memory | 2026-04-08 |
+| [[ai-chat-context-update-design-summary]] | ai-chat, context-management, llm, memory | 2026-04-10 |
 
 ---
 
@@ -81,6 +82,7 @@ description: 全局索引
 | sources/ai-agents/claude-code-prompt-system.md | compiled |
 | sources/ai-agents/claude-code-harness-analysis.md | compiled |
 | sources/ai-agents/claude-code-source-analysis.md | compiled |
+| sources/design/ai-chat-webflow/ai_chat_context_update_design.md | compiled |
 
 ---
 
