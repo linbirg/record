@@ -294,3 +294,30 @@ LLM 返回完整响应
 | 日期 | 版本 | 更新内容 |
 |-----|------|---------|
 | 2026-04-10 | v1.0 | 初始版本，记录上下文自动更新设计方案 |
+| 2026-04-10 | v1.1 | 修复 LLM 摘要 JSON 解析问题 |
+
+---
+
+## 十一、已知问题与修复
+
+### 11.1 LLM 摘要 JSON 解析失败
+
+**问题描述**：
+- LLM 返回的内容可能包含 markdown 代码块（如 ```json ... ```）
+- 直接使用 `json.loads()` 解析会失败：`Expecting ',' delimiter`
+
+**解决方案**：
+- 新增 `_extract_json()` 方法处理 markdown 代码块
+- 添加日志记录 LLM 原始返回内容，便于调试
+
+**日志跟踪点**：
+| 位置 | 日志级别 | 内容 |
+|-----|---------|------|
+| `run_summarization` 开始 | INFO | session_id, 消息数量 |
+| LLM 返回后 | INFO | 原始响应内容（前500字符） |
+| `_extract_json` 提取过程 | TRACE | JSON 提取各阶段 |
+| JSON 解析成功 | INFO | session_summary, memory_count |
+| JSON 解析失败 | FATAL | 错误详情 |
+
+**修复文件**：
+- `llm_summarizer.py`: 添加 `_extract_json` 方法，改进日志
