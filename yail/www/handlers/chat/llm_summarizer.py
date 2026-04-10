@@ -173,7 +173,7 @@ class LLMSummarizer:
             return result
         
         logger.LOG_FATAL(f"[LLMSummarizer] no JSON found in content")
-        logger.LOG_FATAL(f"[LLMSummarizer] original content: {original_content[:500]}")
+        logger.LOG_FATAL(f"[LLMSummarizer] original content:\n{original_content}")
         return None
 
     async def run_summarization(self) -> Tuple[Optional[Dict], List[Memory]]:
