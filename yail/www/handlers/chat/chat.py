@@ -241,6 +241,7 @@ async def call_llm_stream(context: dict) -> dict:
             model=conf.OPENAI_MODEL,
             messages=openai_messages,
             stream=True,
+            extra_body={"reasoning_split": True},
         )
 
         logger.LOG_INFO(f"[call_llm_stream] stream response received, type={type(response)}")
@@ -256,11 +257,15 @@ async def call_llm_stream(context: dict) -> dict:
             delta_dict = vars(delta) if hasattr(delta, '__dict__') else {}
             logger.LOG_INFO(f"[call_llm_stream] delta content: {delta_dict}")
 
-            if hasattr(delta, 'reasoning_content') and delta.reasoning_content:
-                full_reasoning = delta.reasoning_content
-                yield {'reasoning_content': full_reasoning, 'content': full_content}
+            if (hasattr(delta, 'reasoning_details') 
+                and delta.reasoning_details):
+                for detail in delta.reasoning_details:
+                    if "text" in detail:
+                        reasoning_text = detail["text"]
+                        full_reasoning += reasoning_text
+                        yield {'reasoning_content': full_reasoning, 'content': full_content}
 
-            if hasattr(delta, 'content') and delta.content:
+            if delta.content:
                 full_content += delta.content
                 yield {'reasoning_content': full_reasoning, 'content': full_content}
 
