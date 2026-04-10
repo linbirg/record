@@ -283,5 +283,21 @@ class GlobalContextManager:
         
         return '\n'.join(lines)
 
+    def update_from_memories(self, memories: List) -> None:
+        """根据记忆更新全局上下文"""
+        context = self.get_context()
+        
+        for memory in memories:
+            if memory.type == MemoryType.USER:
+                pref_text = f"{memory.name}: {memory.description}"
+                if pref_text not in context.user_preferences:
+                    context.user_preferences.append(pref_text)
+            elif memory.type == MemoryType.PROJECT:
+                proj_text = f"{memory.name}: {memory.description}"
+                if proj_text not in context.known_projects:
+                    context.known_projects.append(proj_text)
+        
+        self.save_context(context)
+
 
 global_context_manager = GlobalContextManager()

@@ -41,6 +41,8 @@ from .message_store import create_message_store
 from .global_context import global_context_manager
 from .memory_store import memory_store
 from .memory_types import Memory, MemoryType, MemoryScope
+from .session_context_manager import create_session_context_manager
+from .llm_summarizer import run_llm_summarization
 
 
 logger.LOG_INFO("[chat] module loaded")
@@ -266,6 +268,18 @@ async def call_llm_stream(context: dict) -> dict:
             content=full_content,
             reasoning_content=full_reasoning,
         )
+        
+        scm = create_session_context_manager(session_id)
+        scm.update_session_context()
+        
+        if check_summarization_needed(
+            message_count=msg_store.get_message_count(),
+            total_tokens=msg_store.get_total_tokens(),
+            delta_tokens=len(full_content),
+            no_tool_call_rounds=msg_store.get_recent_tool_call_count(),
+        ):
+            if check_summarization_debounce():
+                await run_llm_summarization(session_id, user_id)
 
     except Exception as e:
         logger.LOG_FATAL(f"MiniMax API error: {e}")
