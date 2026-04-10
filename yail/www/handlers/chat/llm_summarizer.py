@@ -12,6 +12,7 @@ from datetime import datetime
 from typing import Dict, List, Optional, Tuple
 
 from conf import dev as conf
+from lib import logger
 
 from .session_manager import (
     get_session_dir,
@@ -137,8 +138,40 @@ class LLMSummarizer:
             base_url=conf.OPENAI_BASE_URL,
         )
 
+    def _extract_json(self, content: str) -> Optional[str]:
+        """从 LLM 返回内容中提取 JSON"""
+        content = content.strip()
+        
+        logger.LOG_TRACE(f"[LLMSummarizer] _extract_json input: {content[:200]}")
+        
+        if content.startswith('```'):
+            lines = content.split('\n')
+            json_lines = []
+            in_code_block = False
+            for line in lines:
+                if line.startswith('```'):
+                    in_code_block = not in_code_block
+                    continue
+                if in_code_block:
+                    json_lines.append(line)
+            content = '\n'.join(json_lines)
+            logger.LOG_TRACE(f"[LLMSummarizer] after removing code block: {content[:200]}")
+        
+        json_start = content.find('{')
+        json_end = content.rfind('}') + 1
+        
+        if json_start >= 0 and json_end > json_start:
+            result = content[json_start:json_end]
+            logger.LOG_TRACE(f"[LLMSummarizer] extracted JSON: {result[:200]}")
+            return result
+        
+        logger.LOG_FATAL(f"[LLMSummarizer] no JSON found in content")
+        return None
+
     async def run_summarization(self) -> Tuple[Optional[Dict], List[Memory]]:
         """执行 LLM 摘要"""
+        logger.LOG_INFO(f"[LLMSummarizer] start summarization for session {self.session_id}")
+        
         prompt = self.build_prompt()
         
         client = self._get_openai_client()
@@ -156,24 +189,28 @@ class LLMSummarizer:
             
             content = response.choices[0].message.content
             
-            json_start = content.find('{')
-            json_end = content.rfind('}') + 1
-            if json_start >= 0 and json_end > json_start:
-                json_str = content[json_start:json_end]
+            logger.LOG_INFO(f"[LLMSummarizer] raw LLM response (first 500 chars): {content[:500]}")
+            
+            json_str = self._extract_json(content)
+            if json_str:
                 result = json.loads(json_str)
                 
                 session_summary = result.get('session_summary', {})
                 memory_updates = result.get('memory_updates', [])
                 
+                logger.LOG_INFO(f"[LLMSummarizer] summarization complete, summary={session_summary}, memory_count={len(memory_updates)}")
+                
                 memories = self._process_memory_updates(memory_updates)
                 
                 return session_summary, memories
             else:
+                logger.LOG_FATAL(f"[LLMSummarizer] failed to extract JSON from response")
                 return None, []
                 
         except Exception as e:
-            import logging
-            logging.error(f"LLM summarization error: {e}")
+            logger.LOG_FATAL(f"LLM summarization error: {e}")
+            import traceback
+            logger.LOG_FATAL(f"Traceback: {traceback.format_exc()}")
             return None, []
 
     def _process_memory_updates(self, updates: List[Dict]) -> List[Memory]:

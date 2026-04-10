@@ -12,6 +12,7 @@ from pathlib import Path
 from typing import Dict, List, Optional
 
 from conf import dev as conf
+from lib import logger
 
 from .session_manager import get_session_context_file, get_session_dir
 from .message_store import create_message_store
@@ -144,6 +145,8 @@ class SessionContextManager:
         """更新会话上下文"""
         if not self.should_update():
             return
+        
+        logger.LOG_INFO(f"[SessionContextManager] updating context for session {self.session_id}")
         
         msg_store = create_message_store(self.session_id)
         messages = msg_store.load_messages()
