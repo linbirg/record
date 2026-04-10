@@ -412,7 +412,48 @@ def _normalize_result(self, result: Dict) -> Tuple[Dict, List]:
 
 ---
 
-## 十一、更新日志
+## 十一、LLM 摘要异步执行
+
+### 11.1 设计目标
+
+将 LLM 摘要从同步执行改为异步执行，避免阻塞前端响应。
+
+### 11.2 问题描述
+
+当前 `run_llm_summarization` 是在 `call_llm_stream` 内部被 `await` 调用的：
+
+```
+chat_send 
+    └── async for chunk in call_llm_stream(context)
+            └── ...yield chunks...
+            └── stream complete
+            └── await run_llm_summarization()  ← 同步等待，前端卡住
+```
+
+### 11.3 解决方案
+
+使用 `asyncio.create_task()` 将摘要任务放到后台异步执行：
+
+```python
+if check_summarization_debounce():
+    asyncio.create_task(run_llm_summarization(session_id, user_id))
+```
+
+### 11.4 效果
+
+- 摘要任务在后台异步执行，不阻塞前端响应
+- 前端立即收到 "done" 事件，用户体验不受影响
+- 摘要结果仍然正常保存到文件系统
+
+### 11.5 修改文件
+
+| 文件 | 修改内容 |
+|-----|---------|
+| `chat.py` | 将 `await run_llm_summarization()` 改为 `asyncio.create_task(run_llm_summarization())` |
+
+---
+
+## 十二、更新日志
 
 | 日期 | 版本 | 更新内容 |
 |-----|------|---------|
@@ -420,12 +461,13 @@ def _normalize_result(self, result: Dict) -> Tuple[Dict, List]:
 | 2026-04-10 | v1.1 | 修复 LLM 摘要 JSON 解析问题 |
 | 2026-04-10 | v1.2 | 增强日志记录，完整保存 LLM 原始响应 |
 | 2026-04-10 | v1.3 | 重构 LLM 摘要 Prompt：分离 system/user 消息，添加格式兼容性处理 |
+| 2026-04-10 | v1.4 | LLM 摘要改为异步执行，避免阻塞前端 |
 
 ---
 
-## 十二、已知问题与修复
+## 十三、已知问题与修复
 
-### 12.1 LLM 摘要 JSON 解析失败
+### 13.1 LLM 摘要 JSON 解析失败
 
 **问题描述**：
 - LLM 返回的内容可能包含 markdown 代码块（如 ```json ... ```）

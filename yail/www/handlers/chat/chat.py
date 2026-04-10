@@ -279,7 +279,7 @@ async def call_llm_stream(context: dict) -> dict:
             no_tool_call_rounds=msg_store.get_recent_tool_call_count(),
         ):
             if check_summarization_debounce():
-                await run_llm_summarization(session_id, user_id)
+                asyncio.create_task(run_llm_summarization(session_id, user_id))
 
     except Exception as e:
         logger.LOG_FATAL(f"MiniMax API error: {e}")
