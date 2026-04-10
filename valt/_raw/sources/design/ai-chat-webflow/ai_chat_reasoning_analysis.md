@@ -218,7 +218,98 @@ message.vue 渲染
 
 ---
 
-## 五、相关文件清单
+## 五、官方 API 修复方案
+
+### 5.1 问题根因
+
+通过日志分析和官方 API 示例对比，发现以下问题：
+
+| 问题 | 当前实现 | 官方示例 |
+|-----|---------|---------|
+| API 参数 | 无特殊参数 | `extra_body={"reasoning_split": True}` |
+| 思考字段 | `delta.reasoning_content` | `delta.reasoning_details` |
+| 处理方式 | 直接读取属性 | 遍历列表检查 `"text" in detail` |
+
+### 5.2 官方 API 示例
+
+```python
+from openai import OpenAI
+client = OpenAI()
+
+stream = client.chat.completions.create(
+    model="MiniMax-M2.7",
+    messages=[
+        {"role": "system", "content": "You are a helpful assistant."},
+        {"role": "user", "content": "Hi, how are you?"},
+    ],
+    # 设置 reasoning_split=True 将思考内容分离到 reasoning_details 字段
+    extra_body={"reasoning_split": True},
+    stream=True,
+)
+
+reasoning_buffer = ""
+text_buffer = ""
+
+for chunk in stream:
+    if (
+        hasattr(chunk.choices[0].delta, "reasoning_details")
+        and chunk.choices[0].delta.reasoning_details
+    ):
+        for detail in chunk.choices[0].delta.reasoning_details:
+            if "text" in detail:
+                reasoning_text = detail["text"]
+                new_reasoning = reasoning_text[len(reasoning_buffer) :]
+                if new_reasoning:
+                    print(new_reasoning, end="", flush=True)
+                    reasoning_buffer = reasoning_text
+
+    if chunk.choices[0].delta.content:
+        content_text = chunk.choices[0].delta.content
+        new_text = content_text[len(text_buffer) :] if text_buffer else content_text
+        if new_text:
+            print(new_text, end="", flush=True)
+            text_buffer = content_text
+```
+
+### 5.3 修复方案
+
+**文件**: `yail/www/handlers/chat/chat.py`
+
+**修改内容**:
+
+1. API 调用添加 `reasoning_split` 参数：
+```python
+response = await client.chat.completions.create(
+    model=conf.OPENAI_MODEL,
+    messages=openai_messages,
+    stream=True,
+    extra_body={"reasoning_split": True},  # 新增
+)
+```
+
+2. 处理逻辑改为遍历 `reasoning_details`：
+```python
+for chunk in response:
+    delta = chunk.choices[0].delta
+    
+    # 处理思考内容
+    if (hasattr(delta, 'reasoning_details') 
+        and delta.reasoning_details):
+        for detail in delta.reasoning_details:
+            if "text" in detail:
+                reasoning_text = detail["text"]
+                full_reasoning += reasoning_text
+                yield {'reasoning_content': full_reasoning, 'content': full_content}
+    
+    # 处理正文内容
+    if delta.content:
+        full_content += delta.content
+        yield {'reasoning_content': full_reasoning, 'content': full_content}
+```
+
+---
+
+## 六、相关文件清单
 
 | 文件 | 职责 |
 |-----|------|
@@ -228,8 +319,9 @@ message.vue 渲染
 
 ---
 
-## 六、更新日志
+## 七、更新日志
 
 | 日期 | 版本 | 更新内容 |
 |-----|------|---------|
 | 2026-04-10 | v1.0 | 初始版本，记录思考过程处理分析 |
+| 2026-04-10 | v1.1 | 添加官方 API 修复方案，修复 reasoning_details 处理逻辑 |

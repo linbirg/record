@@ -5,6 +5,7 @@
 ### 设计文档
 
 - [create] sources/design/ai-chat-webflow/ai_chat_reasoning_analysis.md (思考过程处理分析)
+- [update] ai_chat_reasoning_analysis.md - 添加官方 API 修复方案
 
 ### ingest
 
