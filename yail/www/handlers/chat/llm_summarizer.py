@@ -140,10 +140,16 @@ class LLMSummarizer:
 
     def _extract_json(self, content: str) -> Optional[str]:
         """从 LLM 返回内容中提取 JSON"""
+        original_content = content
         content = content.strip()
         
         logger.LOG_TRACE(f"[LLMSummarizer] _extract_json input: {content[:200]}")
         
+        # 去除思考内容 【行动计划】...【/行动计划】
+        import re
+        content = re.sub(r'【.*?】', '', content, flags=re.DOTALL)
+        
+        # 去除 ```json 代码块
         if content.startswith('```'):
             lines = content.split('\n')
             json_lines = []
@@ -166,6 +172,7 @@ class LLMSummarizer:
             return result
         
         logger.LOG_FATAL(f"[LLMSummarizer] no JSON found in content")
+        logger.LOG_FATAL(f"[LLMSummarizer] original content: {original_content[:500]}")
         return None
 
     async def run_summarization(self) -> Tuple[Optional[Dict], List[Memory]]:
