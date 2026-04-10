@@ -92,12 +92,13 @@ class LLMSummarizer:
 4. 已有关联记忆:
 {existing_memories if existing_memories else "无"}
 
-## 要求
-- 主题提取简洁的关键词
-- 任务描述当前对话的目标
-- 只提取有长期价值的信息作为记忆
-- 如果没有需要提取的记忆，memory_updates 返回空数组
-- progress 描述对话的进度步骤
+## 要求（必须严格遵守）
+- 只输出 JSON，不要有任何其他内容
+- session_summary 必须包含 topic、task、progress 三个字段
+- memory_updates 中每条记忆必须包含 type、name、content、description 四个字段
+- type 只允许: user, feedback, project, reference
+- action 只允许: create, update
+- 字段不允许使用其他名称（如 key、memory_type 等）
 """
         return prompt
 
@@ -168,7 +169,7 @@ class LLMSummarizer:
         
         if json_start >= 0 and json_end > json_start:
             result = content[json_start:json_end]
-            logger.LOG_TRACE(f"[LLMSummarizer] extracted JSON: {result[:200]}")
+            logger.LOG_INFO(f"[LLMSummarizer] extracted JSON:\n{result}")
             return result
         
         logger.LOG_FATAL(f"[LLMSummarizer] no JSON found in content")
