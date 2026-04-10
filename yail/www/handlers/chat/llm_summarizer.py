@@ -170,13 +170,16 @@ class LLMSummarizer:
 
     async def run_summarization(self) -> Tuple[Optional[Dict], List[Memory]]:
         """执行 LLM 摘要"""
-        logger.LOG_INFO(f"[LLMSummarizer] start summarization for session {self.session_id}")
+        logger.LOG_INFO(f"[LLMSummarizer] ===== START SUMMARIZATION =====")
+        logger.LOG_INFO(f"[LLMSummarizer] session_id={self.session_id}, user_id={self.user_id}")
         
         prompt = self.build_prompt()
+        logger.LOG_INFO(f"[LLMSummarizer] prompt length={len(prompt)}")
         
         client = self._get_openai_client()
         
         try:
+            logger.LOG_INFO(f"[LLMSummarizer] calling LLM API...")
             response = await client.chat.completions.create(
                 model=conf.OPENAI_MODEL,
                 messages=[
@@ -186,10 +189,14 @@ class LLMSummarizer:
                 temperature=0.3,
                 max_tokens=2000,
             )
+            logger.LOG_INFO(f"[LLMSummarizer] LLM API call completed")
             
             content = response.choices[0].message.content
             
-            logger.LOG_INFO(f"[LLMSummarizer] raw LLM response (first 500 chars): {content[:500]}")
+            logger.LOG_INFO(f"[LLMSummarizer] ===== RAW LLM RESPONSE =====")
+            logger.LOG_INFO(f"[LLMSummarizer] response length={len(content)}")
+            logger.LOG_INFO(f"[LLMSummarizer] response content:\n{content[:1000]}")
+            logger.LOG_INFO(f"[LLMSummarizer] ===== END RAW RESPONSE =====")
             
             json_str = self._extract_json(content)
             if json_str:
@@ -198,19 +205,28 @@ class LLMSummarizer:
                 session_summary = result.get('session_summary', {})
                 memory_updates = result.get('memory_updates', [])
                 
-                logger.LOG_INFO(f"[LLMSummarizer] summarization complete, summary={session_summary}, memory_count={len(memory_updates)}")
+                logger.LOG_INFO(f"[LLMSummarizer] ===== SUMMARIZATION RESULT =====")
+                logger.LOG_INFO(f"[LLMSummarizer] session_summary: {session_summary}")
+                logger.LOG_INFO(f"[LLMSummarizer] memory_updates count: {len(memory_updates)}")
+                for i, mem in enumerate(memory_updates):
+                    logger.LOG_INFO(f"[LLMSummarizer] memory[{i}]: type={mem.get('type')}, name={mem.get('name')}, description={mem.get('description')}")
+                logger.LOG_INFO(f"[LLMSummarizer] ===== END RESULT =====")
                 
                 memories = self._process_memory_updates(memory_updates)
+                logger.LOG_INFO(f"[LLMSummarizer] processed memories count: {len(memories)}")
                 
+                logger.LOG_INFO(f"[LLMSummarizer] ===== SUMMARIZATION COMPLETE =====")
                 return session_summary, memories
             else:
                 logger.LOG_FATAL(f"[LLMSummarizer] failed to extract JSON from response")
                 return None, []
                 
         except Exception as e:
+            logger.LOG_FATAL(f"[LLMSummarizer] ===== SUMMARIZATION FAILED =====")
             logger.LOG_FATAL(f"LLM summarization error: {e}")
             import traceback
             logger.LOG_FATAL(f"Traceback: {traceback.format_exc()}")
+            logger.LOG_FATAL(f"[LLMSummarizer] ===== END FAILED =====")
             return None, []
 
     def _process_memory_updates(self, updates: List[Dict]) -> List[Memory]:
