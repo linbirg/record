@@ -252,6 +252,9 @@ async def call_llm_stream(context: dict) -> dict:
 
             delta = chunk.choices[0].delta
             logger.LOG_TRACE(f"[call_llm_stream] delta attrs: {dir(delta)}")
+            
+            delta_dict = vars(delta) if hasattr(delta, '__dict__') else {}
+            logger.LOG_INFO(f"[call_llm_stream] delta content: {delta_dict}")
 
             if hasattr(delta, 'reasoning_content') and delta.reasoning_content:
                 full_reasoning = delta.reasoning_content
