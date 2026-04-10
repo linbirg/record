@@ -295,6 +295,7 @@ LLM 返回完整响应
 |-----|------|---------|
 | 2026-04-10 | v1.0 | 初始版本，记录上下文自动更新设计方案 |
 | 2026-04-10 | v1.1 | 修复 LLM 摘要 JSON 解析问题 |
+| 2026-04-10 | v1.2 | 增强日志记录，完整保存 LLM 原始响应 |
 
 ---
 
@@ -313,11 +314,13 @@ LLM 返回完整响应
 **日志跟踪点**：
 | 位置 | 日志级别 | 内容 |
 |-----|---------|------|
-| `run_summarization` 开始 | INFO | session_id, 消息数量 |
-| LLM 返回后 | INFO | 原始响应内容（前500字符） |
-| `_extract_json` 提取过程 | TRACE | JSON 提取各阶段 |
-| JSON 解析成功 | INFO | session_summary, memory_count |
-| JSON 解析失败 | FATAL | 错误详情 |
+| `run_summarization` 开始 | INFO | ===== START SUMMARIZATION =====, session_id, user_id, prompt length |
+| 调用 LLM API 前 | INFO | calling LLM API... |
+| LLM API 调用完成 | INFO | LLM API call completed |
+| LLM 返回后 | INFO | ===== RAW LLM RESPONSE =====, response length, 完整响应内容 |
+| JSON 解析成功 | INFO | ===== SUMMARIZATION RESULT =====, session_summary, memory_updates 详情 |
+| 摘要完成 | INFO | ===== SUMMARIZATION COMPLETE ===== |
+| 摘要失败 | FATAL | ===== SUMMARIZATION FAILED =====, 错误详情, 完整堆栈 |
 
 **修复文件**：
-- `llm_summarizer.py`: 添加 `_extract_json` 方法，改进日志
+- `llm_summarizer.py`: 添加 `_extract_json` 方法，完整日志记录
