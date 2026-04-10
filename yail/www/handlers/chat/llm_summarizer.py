@@ -34,8 +34,10 @@ class LLMSummarizer:
         self.session_id = session_id
         self.user_id = user_id
 
-    def build_prompt(self) -> str:
-        """构建 LLM Prompt"""
+    def build_prompt(self) -> Tuple[str, str]:
+        """构建 LLM Prompt
+        返回: (system_content, user_content)
+        """
         msg_store = create_message_store(self.session_id)
         messages = msg_store.load_messages()
         
@@ -56,7 +58,9 @@ class LLMSummarizer:
         
         existing_memories = self._get_existing_memories()
         
-        prompt = f"""## 任务指令
+        system_content = f"""你是上下文管理助手，负责分析对话并提取摘要和记忆。
+
+## 任务指令
 分析以下对话，输出 JSON 格式的结果。不要调用任何工具，只返回文本内容。
 
 ## 输出格式
@@ -98,9 +102,12 @@ class LLMSummarizer:
 - memory_updates 中每条记忆必须包含 type、name、content、description 四个字段
 - type 只允许: user, feedback, project, reference
 - action 只允许: create, update
-- 字段不允许使用其他名称（如 key、memory_type 等）
+- progress 必须是数组，每个元素是一个步骤描述
 """
-        return prompt
+        
+        user_content = "请按上述格式要求返回 JSON，不要输出任何其他内容。"
+        
+        return system_content, user_content
 
     def _format_messages(self, messages: List[Dict]) -> str:
         """格式化消息为文本"""
@@ -176,13 +183,36 @@ class LLMSummarizer:
         logger.LOG_FATAL(f"[LLMSummarizer] original content:\n{original_content}")
         return None
 
+    def _normalize_result(self, result: Dict) -> Tuple[Dict, List]:
+        """兼容 LLM 返回的各种格式"""
+        session_summary = result.get('session_summary', {})
+        
+        # 如果 session_summary 为空，尝试从顶层提取
+        if not session_summary:
+            session_summary = {
+                'topic': result.get('topic', ''),
+                'task': result.get('task', ''),
+                'progress': result.get('progress', [])
+            }
+            logger.LOG_INFO(f"[LLMSummarizer] session_summary extracted from top-level fields")
+        
+        # 兼容 progress 为字符串的情况
+        if isinstance(session_summary.get('progress'), str):
+            progress_str = session_summary['progress']
+            session_summary['progress'] = [progress_str]
+            logger.LOG_INFO(f"[LLMSummarizer] progress converted from string to array")
+        
+        memory_updates = result.get('memory_updates', [])
+        
+        return session_summary, memory_updates
+
     async def run_summarization(self) -> Tuple[Optional[Dict], List[Memory]]:
         """执行 LLM 摘要"""
         logger.LOG_INFO(f"[LLMSummarizer] ===== START SUMMARIZATION =====")
         logger.LOG_INFO(f"[LLMSummarizer] session_id={self.session_id}, user_id={self.user_id}")
         
-        prompt = self.build_prompt()
-        logger.LOG_INFO(f"[LLMSummarizer] prompt length={len(prompt)}")
+        system_content, user_content = self.build_prompt()
+        logger.LOG_INFO(f"[LLMSummarizer] system_content length={len(system_content)}, user_content length={len(user_content)}")
         
         client = self._get_openai_client()
         
@@ -191,10 +221,10 @@ class LLMSummarizer:
             response = await client.chat.completions.create(
                 model=conf.OPENAI_MODEL,
                 messages=[
-                    {'role': 'system', 'content': '你是一个上下文管理助手，负责分析对话并提取摘要和记忆。'},
-                    {'role': 'user', 'content': prompt}
+                    {'role': 'system', 'content': system_content},
+                    {'role': 'user', 'content': user_content}
                 ],
-                temperature=0.3,
+                temperature=0.1,
                 max_tokens=2000,
             )
             logger.LOG_INFO(f"[LLMSummarizer] LLM API call completed")
@@ -210,8 +240,7 @@ class LLMSummarizer:
             if json_str:
                 result = json.loads(json_str)
                 
-                session_summary = result.get('session_summary', {})
-                memory_updates = result.get('memory_updates', [])
+                session_summary, memory_updates = self._normalize_result(result)
                 
                 logger.LOG_INFO(f"[LLMSummarizer] ===== SUMMARIZATION RESULT =====")
                 logger.LOG_INFO(f"[LLMSummarizer] session_summary: {session_summary}")
