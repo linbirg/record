@@ -2,6 +2,10 @@
 
 ## 2026-04-10
 
+### 设计文档
+
+- [create] sources/design/ai-chat-webflow/ai_chat_reasoning_analysis.md (思考过程处理分析)
+
 ### ingest
 
 - [ingest] sources/design/ai-chat-webflow/ai_chat_context_update_design.md
