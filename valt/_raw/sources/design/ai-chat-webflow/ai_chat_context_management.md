@@ -406,6 +406,153 @@ chat_sessions/                    # 根目录（由 chat_sessions_dir 配置）
 
 ---
 
+## 十一、调试方案
+
+### 11.1 Context 调试文件
+
+每次调用 LLM API 时，将完整的请求上下文保存到调试文件。
+
+**目录结构**：
+```
+chat_sessions/{session_id}/_debug/{timestamp}_request_context.json
+```
+
+**文件内容**：
+```json
+{
+  "timestamp": "20260409_153052_123456",
+  "session_id": "20260409_143052_user123_a1b2c3d4",
+  "model": "MiniMax-M2.7",
+  "message_count": 5,
+  "messages": [
+    {"role": "system", "content": "你是 ALOHA..."},
+    {"role": "user", "content": "你好"},
+    {"role": "assistant", "content": "你好，有什么可以帮你的？"}
+  ],
+  "extra": {
+    "global_context_preview": "## 用户画像\n- 用户ID: user123\n- 使用语言..."
+  }
+}
+```
+
+**启用条件**：
+- 通过 `call_llm_stream` 调用时自动保存
+- 可通过 `save_debug_context()` 函数手动调用
+
+### 11.2 日志文件
+
+所有日志输出到：
+```
+~/.chat_sessions/logs/yail.log
+```
+
+**日志级别**（在 `lib/logger.py` 中配置）：
+| 级别 | 值 | 说明 |
+|:---|:---:|:---|
+| DEBUG | 1 | 显示所有日志 |
+| TRACE | 2 | 追踪级别 |
+| INFO | 3 | 信息级别 |
+| WARNING | 5 | 警告级别 |
+| FATAL | 6 | 错误级别 |
+
+**当前配置**：`cur_output_level = 1` (DEBUG)
+
+### 11.3 调试函数
+
+```python
+# chat.py
+save_debug_context(session_id, openai_messages, extra)
+```
+
+### 11.4 调试文件清理
+
+定期清理 `_debug` 目录，避免占用过多磁盘空间：
+```bash
+# 保留最近 7 天的调试文件
+find ~/.chat_sessions -name "*_request_context.json" -mtime +7 -delete
+```
+
+---
+
+## 十、错误处理机制
+
+### 10.1 设计原则
+
+1. **异常必须计入会话消息** - 任何 API 异常都应该保存为一条 assistant 消息，确保会话历史完整
+2. **错误信息对用户友好** - 原始错误码/信息转换为友好提示
+3. **错误可追溯** - 保留完整错误信息用于调试
+
+### 10.2 错误消息格式
+
+当 API 调用异常时，保存的消息格式：
+
+```markdown
+---
+num: 003
+role: assistant
+timestamp: 2024-04-09 15:30:00
+error: true
+error_type: APIError
+error_code: 529
+---
+
+## 抱歉，发生了错误
+
+错误类型: APIError (错误码: 529)
+错误信息: Server overloaded
+
+请稍后重试，或联系管理员。
+```
+
+### 10.3 错误类型映射
+
+| 错误类型 | 用户提示 |
+|:---|:---|
+| APIError/529 | 服务器繁忙，请稍后重试 |
+| APIError/429 | 请求过于频繁，请稍后重试 |
+| APIError/401 | 认证失败，请检查 API Key 配置 |
+| APIError/400 | 请求参数错误 |
+| TimeoutError | 请求超时，请检查网络连接 |
+| 其他 | 抱歉，发生了错误，请稍后重试 |
+
+### 10.4 实现要点
+
+```python
+# chat_send 中的异常处理
+except Exception as e:
+    # 1. 记录日志
+    logger.LOG_FATAL(f"Chat error: {e}")
+    
+    # 2. 提取错误信息
+    error_type = type(e).__name__
+    error_message = str(e)
+    
+    # 3. 构建友好错误消息
+    friendly_message = get_friendly_error_message(error_type, error_message)
+    
+    # 4. 保存为 assistant 消息
+    msg_store = create_message_store(session_id)
+    msg_store.save_assistant_message(
+        content=friendly_message,
+        reasoning_content=None,
+        metadata={'error': True, 'error_type': error_type, 'error_message': error_message}
+    )
+    
+    # 5. 返回错误给前端
+    error_data = json.dumps({'error': error_message}, ensure_ascii=False)
+    await resp.write(f"event: error\ndata: {error_data}\n\n".encode('utf-8'))
+```
+
+### 10.5 与 Claude Code 的对比
+
+| 特性 | Claude Code | 我们的实现 |
+|:---|:---|:---|
+| 错误计入会话 | ❌ 不计入（ withhold 机制） | ✅ 计入 |
+| 错误重试 | ✅ 7种 continue 原因处理 | 暂不实现 |
+| 错误分类 | ✅ 细分处理 | 暂不细分，统一提示 |
+
+---
+
 ## 更新日志
 
 | 日期 | 版本 | 更新内容 |
@@ -414,3 +561,5 @@ chat_sessions/                    # 根目录（由 chat_sessions_dir 配置）
 | 2026-04-09 | v2.0 | 对标 Claude Code 重构压缩系统和记忆系统 |
 | 2026-04-09 | v2.1 | 新增目录结构、待细化问题清单 |
 | 2026-04-09 | v2.2 | 确认跨 session 共享结构、session_id 格式 |
+| 2026-04-09 | v2.3 | 新增错误处理机制，异常计入会话消息 |
+| 2026-04-09 | v2.4 | 新增调试方案，Context 保存到 _debug 目录 |

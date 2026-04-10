@@ -17,6 +17,8 @@ from aiohttp import web
 import asyncio
 import json
 import openai
+from datetime import datetime
+from pathlib import Path
 from openai import AsyncOpenAI
 
 from www.dao.chat_message import ChatMessage
@@ -33,6 +35,7 @@ from .session_manager import (
     check_summarization_debounce,
     run_summarization,
     estimate_tokens,
+    get_session_dir,
 )
 from .message_store import create_message_store
 from .global_context import global_context_manager
@@ -41,26 +44,6 @@ from .memory_types import Memory, MemoryType, MemoryScope
 
 
 logger.LOG_INFO("[chat] module loaded")
-
-from www.dao.chat_message import ChatMessage
-from conf import dev as conf
-from www.common.message import Message
-from lib import logger
-
-from .session_manager import (
-    generate_session_id,
-    init_global_structure,
-    init_session_structure,
-    session_exists,
-    check_summarization_needed,
-    check_summarization_debounce,
-    run_summarization,
-    estimate_tokens,
-)
-from .message_store import create_message_store
-from .global_context import global_context_manager
-from .memory_store import memory_store
-from .memory_types import Memory, MemoryType, MemoryScope
 
 
 _client = None
@@ -93,6 +76,35 @@ def ensure_session_exists(session_id: str, user_id: str):
     if not session_exists(session_id):
         init_session_structure(session_id)
         global_context_manager.add_session(session_id)
+
+
+def save_debug_context(session_id: str, openai_messages: list, extra: dict = None):
+    """
+    保存调试上下文到 session 的 _debug 目录
+    
+    目录结构:
+    chat_sessions/{session_id}/_debug/{timestamp}_request_context.json
+    """
+    debug_dir = get_session_dir(session_id) / '_debug'
+    debug_dir.mkdir(parents=True, exist_ok=True)
+    
+    timestamp = datetime.now().strftime('%Y%m%d_%H%M%S_%f')
+    debug_file = debug_dir / f'{timestamp}_request_context.json'
+    
+    debug_data = {
+        'timestamp': timestamp,
+        'session_id': session_id,
+        'model': conf.OPENAI_MODEL,
+        'message_count': len(openai_messages),
+        'messages': openai_messages,
+    }
+    if extra:
+        debug_data['extra'] = extra
+    
+    debug_file.write_text(json.dumps(debug_data, ensure_ascii=False, indent=2), encoding='utf-8')
+    logger.LOG_INFO(f"[save_debug_context] saved to {debug_file}")
+    
+    return debug_file
 
 
 @post("/chat/send_real")
@@ -165,8 +177,16 @@ async def chat_send_real(request):
         await resp.write(f"event: done\ndata: \n\n".encode('utf-8'))
     except Exception as e:
         logger.LOG_FATAL(f"Chat error: {e}")
-        error_data = json.dumps({'error': str(e)}, ensure_ascii=False)
-        await resp.write(f"event: error\ndata: {error_data}\n\n".encode('utf-8'))
+        error_type = type(e).__name__
+        error_message = str(e)
+        msg_store = create_message_store(session_id)
+        msg_store.save_assistant_message(
+            content="抱歉，发生了错误：" + error_message,
+            reasoning_content=None,
+            metadata={"error": True, "error_type": error_type, "error_message": error_message}
+        )
+        error_data = json.dumps({"error": error_message}, ensure_ascii=False)
+        await resp.write(f"event: error\ndata: {error_data}\n\n".encode("utf-8"))
 
     await resp.write_eof()
     return resp
@@ -203,6 +223,10 @@ async def call_llm_stream(context: dict) -> dict:
             openai_messages.append({'role': 'user', 'content': content})
         elif role == 'assistant':
             openai_messages.append({'role': 'assistant', 'content': content})
+
+    save_debug_context(session_id, openai_messages, {
+        'global_context_preview': global_context[:200] if global_context else None
+    })
 
     logger.LOG_INFO(f"[call_llm_stream] model={conf.OPENAI_MODEL}, messages_to_send={len(openai_messages)}")
 
@@ -312,8 +336,16 @@ async def chat_send(request):
         await resp.write(f"event: done\ndata: \n\n".encode('utf-8'))
     except Exception as e:
         logger.LOG_FATAL(f"Chat error: {e}")
-        error_data = json.dumps({'error': str(e)}, ensure_ascii=False)
-        await resp.write(f"event: error\ndata: {error_data}\n\n".encode('utf-8'))
+        error_type = type(e).__name__
+        error_message = str(e)
+        msg_store = create_message_store(session_id)
+        msg_store.save_assistant_message(
+            content="抱歉，发生了错误：" + error_message,
+            reasoning_content=None,
+            metadata={"error": True, "error_type": error_type, "error_message": error_message}
+        )
+        error_data = json.dumps({"error": error_message}, ensure_ascii=False)
+        await resp.write(f"event: error\ndata: {error_data}\n\n".encode("utf-8"))
 
     await resp.write_eof()
     return resp
@@ -382,7 +414,7 @@ async def chat_memory_save(request):
     {
         "userId": "user123",
         "sessionId": "session_xxx",
-        "type": "user|feedback|project|reference",
+        "type": "user|feedback| project/reference",
         "name": "记忆名称",
         "description": "记忆描述",
         "content": "记忆内容"
