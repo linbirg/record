@@ -289,27 +289,153 @@ LLM 返回完整响应
 
 ---
 
-## 十、更新日志
+## 十、LLM 摘要 Prompt 重构
+
+### 10.1 设计目标
+
+将 prompt 从 user 消息移到 system 消息，提高 LLM 返回格式的稳定性。
+
+### 10.2 消息结构调整
+
+#### System 消息结构
+
+```system
+你是上下文管理助手，负责分析对话并提取摘要和记忆。
+
+## 任务指令
+分析以下对话，输出 JSON 格式的结果。不要调用任何工具，只返回文本内容。
+
+## 输出格式
+{
+  "session_summary": {
+    "topic": "主题关键词",
+    "task": "当前任务描述",
+    "progress": ["已完成步骤1", "进行中步骤2"]
+  },
+  "memory_updates": [
+    {
+      "type": "user|feedback|project|reference",
+      "action": "create|update",
+      "name": "记忆名称",
+      "content": "记忆内容",
+      "description": "一句话描述"
+    }
+  ]
+}
+
+## 输入内容
+1. 最近消息: [最近10条消息内容]
+2. 历史摘要: [从_context.md的历史摘要部分提取]
+3. 用户画像: [用户ID、使用语言、技术水平、用户偏好、已知项目]
+4. 已有关联记忆: [当前会话关联的记忆列表]
+
+## 要求（必须严格遵守）
+- 只输出 JSON，不要有任何其他内容
+- session_summary 必须包含 topic、task、progress 三个字段
+- memory_updates 中每条记忆必须包含 type、name、content、description 四个字段
+- type 只允许: user, feedback, project, reference
+- action 只允许: create, update
+- progress 必须是数组，每个元素是一个步骤描述
+```
+
+#### User 消息结构
+
+```user
+请按上述格式要求返回 JSON，不要输出任何其他内容。
+```
+
+### 10.3 API 调用参数
+
+```python
+response = await client.chat.completions.create(
+    model=conf.OPENAI_MODEL,
+    messages=[
+        {'role': 'system', 'content': system_content},
+        {'role': 'user', 'content': '请按上述格式要求返回 JSON，不要输出任何其他内容。'}
+    ],
+    temperature=0.1,  # 降低随机性
+    max_tokens=2000,
+)
+```
+
+### 10.4 响应解析兼容性处理
+
+#### 10.4.1 JSON 提取
+```python
+def _extract_json(content: str) -> Optional[str]:
+    """从 LLM 返回内容中提取 JSON"""
+    # 去除思考内容
+    content = re.sub(r'【.*?】', '', content, flags=re.DOTALL)
+    # 去除 markdown 代码块
+    if content.startswith('```'):
+        lines = content.split('\n')
+        json_lines = []
+        in_code_block = False
+        for line in lines:
+            if line.startswith('```'):
+                in_code_block = not in_code_block
+                continue
+            if in_code_block:
+                json_lines.append(line)
+        content = '\n'.join(json_lines)
+    
+    json_start = content.find('{')
+    json_end = content.rfind('}') + 1
+    
+    if json_start >= 0 and json_end > json_start:
+        return content[json_start:json_end]
+    return None
+```
+
+#### 10.4.2 格式兼容性处理
+```python
+def _normalize_result(self, result: Dict) -> Tuple[Dict, List]:
+    """兼容 LLM 返回的各种格式"""
+    session_summary = result.get('session_summary', {})
+    
+    # 如果 session_summary 为空，尝试从顶层提取
+    if not session_summary:
+        session_summary = {
+            'topic': result.get('topic', ''),
+            'task': result.get('task', ''),
+            'progress': result.get('progress', [])
+        }
+    
+    # 兼容 progress 为字符串的情况
+    if isinstance(session_summary.get('progress'), str):
+        session_summary['progress'] = [session_summary['progress']]
+    
+    memory_updates = result.get('memory_updates', [])
+    
+    return session_summary, memory_updates
+```
+
+---
+
+## 十一、更新日志
 
 | 日期 | 版本 | 更新内容 |
 |-----|------|---------|
 | 2026-04-10 | v1.0 | 初始版本，记录上下文自动更新设计方案 |
 | 2026-04-10 | v1.1 | 修复 LLM 摘要 JSON 解析问题 |
 | 2026-04-10 | v1.2 | 增强日志记录，完整保存 LLM 原始响应 |
+| 2026-04-10 | v1.3 | 重构 LLM 摘要 Prompt：分离 system/user 消息，添加格式兼容性处理 |
 
 ---
 
-## 十一、已知问题与修复
+## 十二、已知问题与修复
 
-### 11.1 LLM 摘要 JSON 解析失败
+### 12.1 LLM 摘要 JSON 解析失败
 
 **问题描述**：
 - LLM 返回的内容可能包含 markdown 代码块（如 ```json ... ```）
 - 直接使用 `json.loads()` 解析会失败：`Expecting ',' delimiter`
+- LLM 返回的 JSON 格式不固定（嵌套 vs 顶层、progress 字符串 vs 数组）
 
 **解决方案**：
 - 新增 `_extract_json()` 方法处理 markdown 代码块
-- 添加日志记录 LLM 原始返回内容，便于调试
+- 新增 `_normalize_result()` 方法处理格式兼容性
+- 使用严格的 system prompt + temperature=0.1 提高格式稳定性
 
 **日志跟踪点**：
 | 位置 | 日志级别 | 内容 |
@@ -323,4 +449,4 @@ LLM 返回完整响应
 | 摘要失败 | FATAL | ===== SUMMARIZATION FAILED =====, 错误详情, 完整堆栈 |
 
 **修复文件**：
-- `llm_summarizer.py`: 添加 `_extract_json` 方法，完整日志记录
+- `llm_summarizer.py`: 添加 `_extract_json` 方法、`_normalize_result` 方法、完整日志记录
