@@ -12,6 +12,7 @@ import json
 from urllib import parse
 
 import importlib
+from importlib import util as importlib_util
 from importlib.util import module_from_spec
 # import importlib.util
 
@@ -105,9 +106,8 @@ class RequestBody():
 def ResponseBody(coro):
     '''以json形式传递数据'''
     @functools.wraps(coro)
-    @asyncio.coroutine
-    def decorator(*args, **kwargs):
-        r = yield from coro(*args, **kwargs)
+    async def decorator(*args, **kwargs):
+        r = await coro(*args, **kwargs)
         # resp = web.json_response(r)
         resp = web.Response(
             body=json.dumps(r, ensure_ascii=False).encode('utf-8'))
@@ -189,15 +189,14 @@ def has_request_arg(fn):
     return found
 
 
-@asyncio.coroutine
-def parse_post_param(request):
+async def parse_post_param(request):
     if not request.content_type:
         raise BadRequestError('Missing Content-Type.')
 
     ct = request.content_type.lower()
 
     if ct.startswith('application/json'):
-        params = yield from request.json()
+        params = await request.json()
         if not isinstance(params, dict):
             raise BadRequestError('JSON body must be object.')
 
@@ -206,7 +205,7 @@ def parse_post_param(request):
     if ct.startswith('application/x-www-form-urlencoded') or ct.startswith(
             'multipart/form-data') or ct.startswith(
                 'application/octet-stream'):
-        params = yield from request.post()
+        params = await request.post()
         return dict(**params)
 
     raise BadRequestError('Unsupported Content-Type:%s' % ct)
@@ -222,8 +221,7 @@ class RequestHandler(object):
         self._named_kw_args = get_named_kw_args(fn)
         self._required_kw_args = get_required_kw_args(fn)
 
-    @asyncio.coroutine
-    def __parse_args(self, request):
+    async def __parse_args(self, request):
         print("fn:", self._func.__name__, "|_has_request_arg:",
               self._has_request_arg, "|_has_var_kw_arg:", self._has_var_kw_arg,
               "|_has_named_kw_args:", self._has_named_kw_args,
@@ -268,7 +266,7 @@ class RequestHandler(object):
 
             if not name in query_dict:
                 if post_params is None and request.method == 'POST':
-                    post_params = yield from parse_post_param(request)
+                    post_params = await parse_post_param(request)
 
                 if post_params is None:
                     logger.LOG_WARNING('no post parameters.')
@@ -408,14 +406,13 @@ class RequestHandler(object):
         name, _ = self.get_request_body()
         return not name == None
 
-    @asyncio.coroutine
-    def __call__(self, request):
+    async def __call__(self, request):
 
         kw = {}
 
         if self.has_request_body():
             name, kls = self.get_request_body()
-            post_arg = yield from parse_post_param(request)
+            post_arg = await parse_post_param(request)
 
             if kls:
                 post_arg = kls(**post_arg)
@@ -424,15 +421,15 @@ class RequestHandler(object):
 
         try:
             if self._has_var_kw_arg or self._has_named_kw_args or self._has_request_arg:
-                args = yield from self.__parse_args(request)
+                args = await self.__parse_args(request)
 
                 if args is not None and len(args) > 0:
                     kw = {**kw, **args}
         except BadRequestError as e:
-            return web.HTTPBadRequest(e.message)
+            return web.HTTPBadRequest(text=str(e))
 
         try:
-            r = yield from self._func(**kw)
+            r = await self._func(**kw)
             if getattr(self._func, '__stream__', False):
                 return r
             rsp = self._make_response(r, request)
@@ -455,7 +452,11 @@ def add_route(app, fn):
         raise ValueError('@get or @post not defined in %s.' % str(fn))
     if not asyncio.iscoroutinefunction(fn) and not inspect.isgeneratorfunction(
             fn):
-        fn = asyncio.coroutine(fn)
+        # Convert sync function to async wrapper
+        @functools.wraps(fn)
+        async def async_wrapper(*args, **kwargs):
+            return fn(*args, **kwargs)
+        fn = async_wrapper
     logging.info('add route %s %s => %s(%s)' %
                  (method, path, fn.__name__, ', '.join(
                      inspect.signature(fn).parameters.keys())))
@@ -467,7 +468,7 @@ def check_module(module_name):
     Checks if module can be imported without actually
     importing it
     """
-    module_spec = importlib.util.find_spec(module_name)
+    module_spec = importlib_util.find_spec(module_name)
     if module_spec is None:
         print("Module: {} not found".format(module_name))
         return None
