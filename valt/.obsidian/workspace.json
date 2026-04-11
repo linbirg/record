@@ -164,13 +164,23 @@
               "icon": "lucide-list",
               "title": "ai_chat_context_management 的大纲"
             }
+          },
+          {
+            "id": "5ded35d24442a51c",
+            "type": "leaf",
+            "state": {
+              "type": "git-view",
+              "state": {},
+              "icon": "git-pull-request",
+              "title": "Source Control"
+            }
           }
-        ]
+        ],
+        "currentTab": 5
       }
     ],
     "direction": "horizontal",
-    "width": 300,
-    "collapsed": true
+    "width": 300
   },
   "left-ribbon": {
     "hiddenItems": {
@@ -180,11 +190,21 @@
       "daily-notes:打开/创建今天的日记": false,
       "templates:插入模板": false,
       "command-palette:打开命令面板": false,
-      "bases:新建数据库": false
+      "bases:新建数据库": false,
+      "github-sync:Sync with Remote": false,
+      "obsidian-git:Open Git source control": false
     }
   },
   "active": "8be6e263d549f436",
   "lastOpenFiles": [
+    "_wiki/tags/automation.md",
+    "_wiki/tags/tool.md",
+    "_wiki/tags/workflow.md",
+    "_wiki/tags/agent.md",
+    "_wiki/concepts/claude-code-12-harness-patterns.md",
+    "_raw/sources/ai-agents/claude-code-12-harness-patterns.md",
+    "_raw/sources/design/ai-chat-webflow/ai_chat_reasoning_analysis.md",
+    "_wiki/summaries/ai-chat-context-update-design-summary.md",
     "_raw/sources/design/ai-chat-webflow/ai_chat_context_update_plan.md",
     "_raw/sources/design/ai-chat-webflow/ai_chat_context_management.md",
     "_raw/sources/design/ai-chat-webflow/ai_chat_context_update_design.md",
@@ -206,17 +226,9 @@
     "_wiki/concepts/ai-chat-webflow.md",
     "_raw/sources/design/ai-chat-webflow",
     "_wiki/tags/ai-chat.md",
-    "_wiki/tags/sse.md",
-    "_wiki/tags/ui.md",
-    "_wiki/summaries/ai-chat-summary.md",
-    "_wiki/concepts/ai-chat-design.md",
-    "_raw/record/ai_chat_design.md",
-    "_raw/sources/design/claude/README.md",
     "_raw/sources/design/claude/preview.html",
     "_raw/sources/design/claude/preview-dark.html",
     "_raw/sources/design/webflow/preview.html",
-    "_raw/sources/design/webflow/README.md",
-    "_raw/sources/design/claude/DESIGN.md",
     "_raw/sources/design/webflow/preview-dark.html",
     "_raw/sources/design/claude",
     "_raw/sources/design/webflow",
