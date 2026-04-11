@@ -21,6 +21,7 @@ const Duty = () => import('../components/Container/duty')
 const Meeting = () => import('../components/Container/meeting')
 const AddressBook = () => import('../components/Container/addresssBook')
 const CarsReg = () => import('../components/Container/car/carsReg')
+const CarList = () => import('../components/Container/car/CarList')
 
 Vue.use(Router)
 
@@ -38,9 +39,12 @@ const router = new Router({
     path: '/container',
     component: Layout,
     children: [
-      {
-        path: '/record/all',
-        component: Records
+{
+        path: '/carsReg',
+        component: CarsReg
+      }, {
+        path: '/carList',
+        component: CarList
       },{
       path: '/record/personal',
       component: WeekRecords

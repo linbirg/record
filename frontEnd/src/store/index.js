@@ -16,7 +16,8 @@ const state = {
   page: {},
   token: '',
   userId: 0,
-  typeId: 0
+  typeId: 0,
+  chatVisible: true // AI Chat 是否可见
 }
 
 // 同步方法
@@ -44,6 +45,12 @@ const mutations = {
   },
   setCurrentPage(state, currentPage) {
     state.currentPage = currentPage
+  },
+  setChatVisible(state, visible) {
+    state.chatVisible = visible
+  },
+  toggleChatVisible(state) {
+    state.chatVisible = !state.chatVisible
   }
 }
 

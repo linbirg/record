@@ -1,27 +1,34 @@
 <template>
-  <div class="container">
-    <div class="cat-pad">
+  <div class="container" :style="{ marginRight: containerMargin }">
+    <div class="cat-pad" :class="{ expanded: !chatVisible }">
       <router-view></router-view>
     </div>
   </div>
 </template>
 <script>
-  import waves from "@/directive/waves/index.js"; // 水波纹指令
+  import waves from "@/directive/waves/index.js";
+  import { mapState } from "vuex";
+
   export default {
-    // 自定义指令
     directives: {
       waves,
+    },
+    computed: {
+      ...mapState(['chatVisible']),
+      containerMargin() {
+        return this.chatVisible ? '600px' : '68px';
+      }
     },
   };
 </script>
 <style lang="scss" scoped>
   .container {
     margin: 72px 220px;
+    transition: margin-right 0.3s;
   }
   .cat-pad {
     width: 1100px;
     min-height: 400px;
-    // border-radius: 4px;
     padding: 0px 0;
     background-color: #fff;
     font-size: 14px;
@@ -29,6 +36,12 @@
     -webkit-box-shadow: 0 2px 12px 0 rgba(0, 0, 0, 0.1);
     box-shadow: 0 2px 12px 0 rgba(0, 0, 0, 0.1);
     color: #303133;
+    transition: width 0.3s;
+
+    &.expanded {
+      width: calc(100vw - 220px - 68px);
+    }
+
     .btn-item {
       height: 55px;
       padding: 0 50px;
@@ -48,7 +61,6 @@
     }
     .info {
       width: 120px;
-      // margin-right: 20px;
       text-align: center;
       a {
         margin: 0 5px;
