@@ -214,15 +214,11 @@ export default {
       return colorObj ? colorObj.color : "#374151";
     },
 
-    // 判断是否是新能源车
+    // 判断是否是新能源车（车牌8位为新能源，7位为传统）
     isElectricCar(car) {
       if (!car || !car.carNo) return false;
-      const plate = car.carNo.toLowerCase();
-      return (
-        plate.includes("d") ||
-        plate.includes("f") ||
-        (car.brand && car.brand.toLowerCase().includes("新能源"))
-      );
+      const plate = car.carNo.replace(/\s/g, '');
+      return plate.length === 8;
     },
 
     loadCars() {
