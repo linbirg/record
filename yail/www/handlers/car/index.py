@@ -11,7 +11,7 @@ from www.handlers.vo.vo_car_info import VoCarInfo
 from www.dao.car_info import CarInfo
 from www.dao.car_pics import CarPics
 
-from conf.dev import PIC_DIR, PIC_URL
+from conf.dev import PIC_DIR, PIC_URL, OPENAI_API_KEY
 
 
 @get('/car/index')
@@ -216,3 +216,12 @@ def delete(no):
 
     yield from car.delete()
     return Message('ok!')
+
+
+@get('/car/config')
+@ResponseBody
+@asyncio.coroutine
+def get_config():
+    return {
+        'minimaxApiKey': OPENAI_API_KEY
+    }

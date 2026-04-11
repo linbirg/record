@@ -1,16 +1,18 @@
 <template>
-  <section class="real-app">
-    <Chat v-if="chatVisible"></Chat>
+  <div>
+    <section class="real-app" v-show="chatVisible">
+      <Chat></Chat>
+    </section>
     <div 
       class="toggle-btn"
-      :class="{ collapsed: !chatVisible }"
       @click="toggleChat"
-      :title="chatVisible ? '折叠 Chat' : '展开 Chat'"
+      :title="chatVisible ? '折叠' : '展开'"
     >
-      <span v-if="chatVisible" class="icon">›</span>
-      <span v-else class="icon dots">⋮</span>
+      <span class="icon" :class="chatVisible ? 'collapse' : 'expand'">
+        {{ chatVisible ? '>' : '⋮' }}
+      </span>
     </div>
-  </section>
+  </div>
 </template>
 
 <script>
@@ -58,6 +60,7 @@ export default {
   justify-content: center;
   cursor: pointer;
   transition: background 0.2s;
+  z-index: 1000;
 
   &:hover {
     background: rgba(59, 130, 246, 0.25);
@@ -74,7 +77,12 @@ export default {
     font-weight: 600;
   }
 
-  .dots {
+  .collapse {
+    font-size: 18px;
+    font-weight: 400;
+  }
+
+  .expand {
     font-size: 18px;
     font-weight: 400;
   }

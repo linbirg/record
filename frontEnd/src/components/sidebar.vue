@@ -90,10 +90,6 @@ export default {
         index: 10,
         text: '车辆登记',
         link: '/carsReg'
-      }, {
-        index: 12,
-        text: '车辆列表(新)',
-        link: '/carList'
       },{
         index: 11,
         text: '简报',

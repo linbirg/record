@@ -5,7 +5,9 @@
         <span class="logo">🤖</span>
         <span class="title">ALOHA</span>
       </div>
-      <i class="el-icon-delete" @click="clearChat"></i>
+      <div class="header-right">
+        <i class="el-icon-delete" @click="clearChat"></i>
+      </div>
     </div>
     
     <div class="message-list" ref="messageList">

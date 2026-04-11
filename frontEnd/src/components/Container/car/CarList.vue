@@ -135,20 +135,39 @@
         <el-button @click="editDialogVisible = false">取 消</el-button>
         <el-button type="primary" @click="submitForm">确 定</el-button>
       </span>
+</el-dialog>
+
+    <!-- 新增车辆登记弹窗 -->
+    <el-dialog
+      :visible.sync="registrationDialogVisible"
+      title="新增车辆登记"
+      width="600px"
+      :close-on-click-modal="true"
+    >
+      <CarRegistration 
+        v-if="registrationDialogVisible"
+        :ocrApiKey="ocrApiKey"
+        @close="registrationDialogVisible = false"
+      />
     </el-dialog>
   </div>
 </template>
 
 <script>
 import { mapActions } from "vuex";
+import CarRegistration from "./CarRegistration.vue";
 
 export default {
   name: "CarList",
+  components: {
+    CarRegistration,
+  },
   data() {
     return {
       loading: false,
       searchQuery: "",
       carList: [],
+      registrationDialogVisible: false,
       docDialogVisible: false,
       editDialogVisible: false,
       previewVisible: false,
@@ -181,6 +200,7 @@ export default {
         { indices: [6, 7], color: "#4a3728" }, // 深棕
         { indices: [8, 9], color: "#2d3a4a" }, // 深灰蓝
       ],
+      ocrApiKey: '', // MiniMax API Key，后续配置
     };
   },
   computed: {
@@ -192,7 +212,8 @@ export default {
       return this.carList.filter(
         (car) =>
           car.name.toLowerCase().includes(query) ||
-          car.carNo.toLowerCase().includes(query)
+          car.carNo.toLowerCase().includes(query) ||
+          (car.dept && car.dept.toLowerCase().includes(query))
       );
     },
   },
@@ -285,7 +306,19 @@ export default {
         license: "",
         abbr: "",
       };
-      this.editDialogVisible = true;
+      this.getOcrConfig().then(() => {
+        this.registrationDialogVisible = true;
+      });
+    },
+
+    async getOcrConfig() {
+      try {
+        const config = await this.get({ url: 'car/config' });
+        this.ocrApiKey = config.minimaxApiKey || '';
+      } catch (error) {
+        console.error('获取 OCR 配置失败:', error);
+        this.ocrApiKey = '';
+      }
     },
 
     showEditDialog(car) {

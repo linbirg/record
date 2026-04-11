@@ -39,7 +39,7 @@
     transition: width 0.3s;
 
     &.expanded {
-      width: calc(100vw - 220px - 68px);
+      width: 100%;
     }
 
     .btn-item {
