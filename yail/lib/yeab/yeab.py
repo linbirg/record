@@ -41,12 +41,11 @@ class Yeab():
         for fn in self.__after_request:
             self.__app.on_response_prepare.append(fn)
 
-    @asyncio.coroutine
-    def _start(self, loop):
-        yield from orm.Pool.create_pool(loop=loop, **dbconf.rec_db)
+    async def _start(self, loop):
+        await orm.Pool.create_pool(loop=loop, **dbconf.rec_db)
 
         self.add_filters(self.__filters_pkg)
-        self.__app = web.Application(loop=loop,client_max_size=1024**2*10)
+        self.__app = web.Application(loop=loop, client_max_size=1024**2*10)
         
         add_routes(self.__app, self.__handlers)
 
@@ -58,10 +57,10 @@ class Yeab():
         self._append_after_request()
 
         # add_static(self.__app)
-        self.__server = yield from loop.create_server(
+        self.__server = await loop.create_server(
             self.__app.make_handler(), self.__host, self.__port)
         logging.info('server started at http://%s:%d...' %
-                     (self.__host, self.__port))
+                    (self.__host, self.__port))
         return self.__server
 
     def run(self):

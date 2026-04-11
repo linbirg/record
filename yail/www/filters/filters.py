@@ -17,45 +17,39 @@ from lib import logger
 
 
 @ybfilter
-@asyncio.coroutine
-def logger_factory(app, handler):
-    @asyncio.coroutine
-    def logging(request):
+async def logger_factory(app, handler):
+    async def logging(request):
         logger.LOG_INFO('1 Request: %s %s' % (request.method, request.path))
-        return (yield from handler(request))
+        return await handler(request)
 
     return logging
 
 
 @ybfilter
-@asyncio.coroutine
-def auth_factory(app, handler):
-    @asyncio.coroutine
-    def auth(request):
+async def auth_factory(app, handler):
+    async def auth(request):
         logger.LOG_INFO('2 check user: %s %s' % (request.method, request.path))
 
         # if request.path in [
         #         '/login.action', '/user/submitUser.json', '/user/showUser'
         # ]:
-        #     return (yield from handler(request))
+        #     return await handler(request)
 
-        # session = yield from request.get_session()
+        # session = await request.get_session()
         # user = session.get('user')
         # # print(user)
 
         # if user is None:
         #     return web.HTTPFound('/login.action')
 
-        return (yield from handler(request))
+        return await handler(request)
 
     return auth
 
 
 @ybfilter
-@asyncio.coroutine
-def data_factory(app, handler):
-    @asyncio.coroutine
-    def parse_data(request):
+async def data_factory(app, handler):
+    async def parse_data(request):
         logger.LOG_INFO('3 parse_data')
         if request.method == 'OPTIONS':
             # 处理OPTIONS请求
@@ -63,20 +57,19 @@ def data_factory(app, handler):
 
         if request.method == 'POST':
             if request.content_type.startswith('application/json'):
-                request.__data__ = yield from request.json()
+                request.__data__ = await request.json()
                 logging.info('request json: %s' % str(request.__data__))
             elif request.content_type.startswith(
                     'application/x-www-form-urlencoded'):
-                request.__data__ = yield from request.post()
+                request.__data__ = await request.post()
                 logging.info('request form: %s' % str(request.__data__))
 
-        return (yield from handler(request))
+        return await handler(request)
 
     return parse_data
 
 
-@asyncio.coroutine
-def cors(request, response):
+async def cors(request, response):
     # print('response', response)
     origin = request.headers.get('Origin', None)
     if origin is not None:
@@ -153,13 +146,11 @@ def debug_request(request):
 
 
 @ybfilter
-@asyncio.coroutine
-def response_factory(app, handler):
-    @asyncio.coroutine
-    def response(request):
+async def response_factory(app, handler):
+    async def response(request):
         logger.LOG_INFO('4 Response handler...')
         debug_request(request)
-        r = yield from handler(request)
+        r = await handler(request)
         resp = r
 
         if isinstance(r, web.StreamResponse):
@@ -198,8 +189,8 @@ def response_factory(app, handler):
             if isinstance(t, int) and t >= 100 and t < 600:
                 return web.Response(t, str(m))
 
-        if isinstance(r, int) and t >= 100 and t < 600:
-            return web.Response(t)
+        if isinstance(r, int) and r >= 100 and r < 600:
+            return web.Response(r)
 
         # default:
         resp = web.Response(body=str(r).encode('utf-8'))
