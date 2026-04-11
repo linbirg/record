@@ -13,35 +13,29 @@ from www.handlers.vo.vo_week_note import VoWeekNote, VoWeekDetail
 from utils.date_util import DateHelper
 
 from lib import logger
-import asyncio
 
 
 @post("/noteRisk/selectNoteRiskByPage.action")
-@asyncio.coroutine
-@RequestBody('page', kls=VoPage)
+@RequestBody("page", kls=VoPage)
 @ResponseBody
-def page(page):
+async def page(page):
     print(page)
-    notes = yield from WeekNote.find(user_id=page.userId)
-    return {'page': {'totalItem': 1}, 'note': VoNoteRisk.from_notes(notes)}
+    notes = await WeekNote.find(user_id=page.userId)
+    return {"page": {"totalItem": 1}, "note": VoNoteRisk.from_notes(notes)}
 
 
 @post("/note/query")
 @ResponseBody
-@asyncio.coroutine
-def query(userId, weekCount, year=None):
+async def query(userId, weekCount, year=None):
     if year is None:
-        # 默认查询当年记录
         year = DateHelper.today().year
 
-    notes = yield from WeekNote.find(user_id=userId,
-                                     week_count=weekCount,
-                                     year=year)
+    notes = await WeekNote.find(user_id=userId, week_count=weekCount, year=year)
     vo_notes = []
     for nt in notes:
         vo_nt = VoWeekNote.from_model(nt)
 
-        details = yield from Detail.find(note_id=nt.note_id)
+        details = await Detail.find(note_id=nt.note_id)
 
         vo_dts = VoWeekDetail.from_models(details)
         vo_nt.details = vo_dts
@@ -70,83 +64,84 @@ def query(userId, weekCount, year=None):
 
         return a_weeks
 
-    return {'note': pad_week_days(vo_notes)}
+    return {"note": pad_week_days(vo_notes)}
 
 
 @post("/note/detail/delete")
 @ResponseBody
-@asyncio.coroutine
-def delete_detail(id):
-    # print(id)
-    dt = yield from Detail.find_one(detail_id=id)
+async def delete_detail(id):
+    dt = await Detail.find_one(detail_id=id)
     if dt is None:
-        logger.LOG_TRACE('can not find detail where id=%d', id)
+        logger.LOG_TRACE("can not find detail where id=%d", id)
 
     if dt:
-        yield from dt.delete()
+        await dt.delete()
 
-    return Message('success', True)
+    return Message("success", True)
 
 
 @post("/note/detail/add")
 @ResponseBody
-@asyncio.coroutine
-def add_detail(userId, weekCount, weekDay, desc, status):
-    user = yield from User.find_one(user_id=userId)
+async def add_detail(userId, weekCount, weekDay, desc, status):
+    user = await User.find_one(user_id=userId)
 
     if user is None:
-        logger.LOG_WARNING('can not find user where userID=%d', userId)
+        logger.LOG_WARNING("can not find user where userID=%d", userId)
 
-        return Message('failed', False)
+        return Message("failed", False)
 
     year = DateHelper.today().year
 
-    note = yield from WeekNote.find_one(user_id=userId,
-                                        week_count=weekCount,
-                                        week_day=weekDay,
-                                        year=year)
+    note = await WeekNote.find_one(
+        user_id=userId, week_count=weekCount, week_day=weekDay, year=year
+    )
 
     if note is None:
         logger.LOG_WARNING(
-            'can not find week note where userID=%s weekCount=%d weekDay=%d. Will insert new one.',
-            userId, weekCount, weekDay)
+            "can not find week note where userID=%s weekCount=%d weekDay=%d. Will insert new one.",
+            userId,
+            weekCount,
+            weekDay,
+        )
 
-        note = WeekNote(user_id=user.user_id,
-                        user_name=user.username,
-                        week_count=weekCount,
-                        week_day=weekDay,
-                        year=year,
-                        rec_date=DateHelper.today())
-        yield from note.save()
+        note = WeekNote(
+            user_id=user.user_id,
+            user_name=user.username,
+            week_count=weekCount,
+            week_day=weekDay,
+            year=year,
+            rec_date=DateHelper.today(),
+        )
+        await note.save()
 
-    detail = Detail(note_id=note.note_id,
-                    user_id=userId,
-                    user_name=user.username,
-                    rec_date=DateHelper.today(),
-                    week_day=weekDay,
-                    status=status,
-                    desc=desc)
+    detail = Detail(
+        note_id=note.note_id,
+        user_id=userId,
+        user_name=user.username,
+        rec_date=DateHelper.today(),
+        week_day=weekDay,
+        status=status,
+        desc=desc,
+    )
 
-    yield from detail.save()
+    await detail.save()
 
-    # return Message('success', True)
     return detail
 
 
 @post("/note/detail/update")
 @ResponseBody
-@asyncio.coroutine
-def update_detail(detailId, desc, status):
-    dt = yield from Detail.find_one(detail_id=detailId)
+async def update_detail(detailId, desc, status):
+    dt = await Detail.find_one(detail_id=detailId)
     if dt is None:
-        msg = 'can not find detail where id={}'.format(detailId)
+        msg = "not found detail where id={}".format(detailId)
         logger.LOG_TRACE(msg)
 
-        return Message('failed! ' + msg, False)
+        return Message("failed! " + msg, False)
 
     dt.desc = desc
     dt.status = status
 
-    yield from dt.update()
+    await dt.update()
 
-    return Message('success', True)
+    return Message("success", True)
