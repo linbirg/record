@@ -2,14 +2,10 @@
 
 ## 2026-04-10
 
-### 设计文档
-
-- [create] sources/design/ai-chat-webflow/ai_chat_reasoning_analysis.md (思考过程处理分析)
-- [update] ai_chat_reasoning_analysis.md - 添加官方 API 修复方案
-
 ### ingest
 
 - [ingest] sources/design/ai-chat-webflow/ai_chat_context_update_design.md
+- [ingest] sources/ai-agents/claude-code-12-harness-patterns.md (从微信公众号)
 
 ### compile
 
