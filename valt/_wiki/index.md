@@ -10,7 +10,7 @@ description: 全局索引
 | 类型 | 数量 |
 |------|------|
 | Entities | 2 |
-| Concepts | 4 |
+| Concepts | 5 |
 | Summaries | 3 |
 | Tags | 10 |
 
@@ -25,6 +25,7 @@ description: 全局索引
 | [[claude-code-prompt-system]] | agent, prompt, llm, claude | 2026-04-08 |
 | [[claude-code-harness]] | agent, harness, claude, architecture | 2026-04-08 |
 | [[claude-code-source-analysis]] | agent, claude, source-code, typescript, architecture | 2026-04-09 |
+| [[claude-code-12-harness-patterns]] | agent, claude, harness, architecture, memory, workflow, tool, automation | 2026-04-10 |
 
 ---
 
@@ -57,18 +58,21 @@ description: 全局索引
 | [[stream]] | 1 |
 | [[vue]] | 1 |
 | [[yeab]] | 1 |
-| [[agent]] | 3 |
+| [[agent]] | 4 |
 | [[prompt]] | 1 |
 | [[llm]] | 1 |
-| [[claude]] | 3 |
-| [[harness]] | 1 |
-| [[architecture]] | 2 |
-| [[memory]] | 2 |
+| [[claude]] | 4 |
+| [[harness]] | 2 |
+| [[architecture]] | 3 |
+| [[memory]] | 3 |
 | [[context]] | 2 |
 | [[webflow]] | 1 |
 | [[design]] | 1 |
 | [[source-code]] | 1 |
 | [[typescript]] | 1 |
+| [[workflow]] | 1 |
+| [[tool]] | 1 |
+| [[automation]] | 1 |
 
 ---
 
@@ -83,6 +87,7 @@ description: 全局索引
 | sources/ai-agents/claude-code-harness-analysis.md | compiled |
 | sources/ai-agents/claude-code-source-analysis.md | compiled |
 | sources/design/ai-chat-webflow/ai_chat_context_update_design.md | compiled |
+| sources/ai-agents/claude-code-12-harness-patterns.md | compiled |
 
 ---
 

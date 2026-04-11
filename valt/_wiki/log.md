@@ -10,6 +10,8 @@
 ### compile
 
 - [compile] sources/design/ai-chat-webflow/ai_chat_context_update_design.md → summaries/ai-chat-context-update-design-summary.md
+- [compile] sources/ai-agents/claude-code-12-harness-patterns.md → concepts/claude-code-12-harness-patterns.md
+- [create] tags/agent.md
 - [update] _wiki/index.md
 - [update] _raw/registry.md
 

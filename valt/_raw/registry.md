@@ -11,6 +11,6 @@ description: 追踪 Raw Sources 编译状态
 | sources/ai-agents/claude-code-prompt-system.md | compiled | 2026-04-08 | 2026-04-08 |
 | sources/ai-agents/claude-code-harness-analysis.md | compiled | 2026-04-08 | 2026-04-08 |
 | sources/ai-agents/claude-code-source-analysis.md | compiled | 2026-04-09 | 2026-04-09 |
-| sources/ai-agents/claude-code-12-harness-patterns.md | pending | 2026-04-10 | - |
+| sources/ai-agents/claude-code-12-harness-patterns.md | compiled | 2026-04-10 | 2026-04-10 |
 | sources/design/ai-chat-webflow/ai_chat_reasoning_analysis.md | compiled | 2026-04-10 | 2026-04-10 |
 | sources/design/ai-chat-webflow/ai_chat_context_update_design.md | compiled | 2026-04-10 | 2026-04-10 |
