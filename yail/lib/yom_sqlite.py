@@ -255,7 +255,12 @@ class Model(dict, metaclass=ModelMetaClass):
     def row_mapper(cls, row):
         data = dict()
         for k, f in cls.__mappings__.items():
-            data[k] = row[f.name]
+            val = row[f.name]
+            if isinstance(f, IntField) and val is not None:
+                val = int(val)
+            elif isinstance(f, DoubleField) and val is not None:
+                val = float(val)
+            data[k] = val
 
         return cls(**data)
 
