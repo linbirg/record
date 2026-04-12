@@ -51,6 +51,7 @@ def get(path):
 
         wrapper.__method__ = "GET"
         wrapper.__route__ = path
+        wrapper.__signature__ = inspect.signature(func)
         return wrapper
 
     return decorator
@@ -75,6 +76,7 @@ def post(path):
 
         wrapper.__method__ = "POST"
         wrapper.__route__ = path
+        wrapper.__signature__ = inspect.signature(func)
         return wrapper
 
     return decorator
@@ -133,6 +135,7 @@ def ResponseBody(coro):
 
     decorator.__name__ = coro.__name__
     decorator.__qualname__ = coro.__qualname__
+    decorator.__signature__ = inspect.signature(coro)
     return decorator
 
 
@@ -148,6 +151,7 @@ def stream(coro):
 
     wrapper.__name__ = coro.__name__
     wrapper.__qualname__ = coro.__qualname__
+    wrapper.__signature__ = inspect.signature(coro)
     wrapper.__stream__ = True
     return wrapper
 
