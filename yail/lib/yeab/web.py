@@ -1,10 +1,10 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
-'''
+"""
 原作者： 'Michael Liao'
 编辑修改：linbirg
 在Michael Liao异步coroweb的基础上，尝试部分修改，尽量使其独立、好用
-'''
+"""
 
 import asyncio, os, inspect, logging, functools
 import json
@@ -24,23 +24,32 @@ from lib import logger
 
 
 class BadRequestError(Exception):
-    '''
+    """
     diff from web.HTTPBadRequest, when catched a BadRequestError, handler can return a HTTPBadRequest
-    '''
-    def __init__(self, message=''):
+    """
+
+    def __init__(self, message=""):
         super().__init__(message)
 
 
 def get(path):
-    '''
+    """
     Define decorator @get('/path')
-    '''
-    def decorator(func):
-        @functools.wraps(func)
-        def wrapper(*args, **kw):
-            return func(*args, **kw)
+    """
 
-        wrapper.__method__ = 'GET'
+    def decorator(func):
+        if asyncio.iscoroutinefunction(func):
+
+            @functools.wraps(func)
+            async def wrapper(*args, **kw):
+                return await func(*args, **kw)
+        else:
+
+            @functools.wraps(func)
+            def wrapper(*args, **kw):
+                return func(*args, **kw)
+
+        wrapper.__method__ = "GET"
         wrapper.__route__ = path
         return wrapper
 
@@ -48,15 +57,23 @@ def get(path):
 
 
 def post(path):
-    '''
+    """
     Define decorator @post('/path')
-    '''
-    def decorator(func):
-        @functools.wraps(func)
-        def wrapper(*args, **kw):
-            return func(*args, **kw)
+    """
 
-        wrapper.__method__ = 'POST'
+    def decorator(func):
+        if asyncio.iscoroutinefunction(func):
+
+            @functools.wraps(func)
+            async def wrapper(*args, **kw):
+                return await func(*args, **kw)
+        else:
+
+            @functools.wraps(func)
+            def wrapper(*args, **kw):
+                return func(*args, **kw)
+
+        wrapper.__method__ = "POST"
         wrapper.__route__ = path
         return wrapper
 
@@ -64,23 +81,25 @@ def post(path):
 
 
 def ybfilter(func):
-    '''
+    """
     Define filter
-    '''
+    """
+
     @functools.wraps(func)
     def wrapper(*args, **kw):
         return func(*args, **kw)
 
-    wrapper.__yeap_filter__ = 'yeap_filter'
+    wrapper.__yeap_filter__ = "yeap_filter"
     return wrapper
 
 
-class RequestBody():
-    '''从request中解析json为参数'''
+class RequestBody:
+    """从request中解析json为参数"""
+
     # TODO 暂时还不确定，是否是有次注解了之后，不会再有其他参数
 
-    REQUEST_BODY_ATTR = '__request_body_arg__'
-    REQUEST_BODY_ATTR_TYPE = '__request_body_type__'
+    REQUEST_BODY_ATTR = "__request_body_arg__"
+    REQUEST_BODY_ATTR_TYPE = "__request_body_type__"
 
     def __init__(self, name, kls=None):
         self.name = name
@@ -104,30 +123,31 @@ class RequestBody():
 
 
 def ResponseBody(coro):
-    '''以json形式传递数据'''
-    @functools.wraps(coro)
+    """以json形式传递数据"""
+
     async def decorator(*args, **kwargs):
         r = await coro(*args, **kwargs)
-        # resp = web.json_response(r)
-        resp = web.Response(
-            body=json.dumps(r, ensure_ascii=False).encode('utf-8'))
-        resp.content_type = 'application/json;charset=utf-8'
-
+        resp = web.Response(body=json.dumps(r, ensure_ascii=False).encode("utf-8"))
+        resp.content_type = "application/json;charset=utf-8"
         return resp
 
+    decorator.__name__ = coro.__name__
+    decorator.__qualname__ = coro.__qualname__
     return decorator
 
 
 def stream(coro):
-    '''
+    """
     Define decorator @stream
     用于流式响应，返回 web.StreamResponse
     Handler 必须自行处理请求和响应
-    '''
-    @functools.wraps(coro)
+    """
+
     async def wrapper(*args, **kw):
         return await coro(*args, **kw)
 
+    wrapper.__name__ = coro.__name__
+    wrapper.__qualname__ = coro.__qualname__
     wrapper.__stream__ = True
     return wrapper
 
@@ -136,7 +156,10 @@ def get_required_kw_args(fn):
     args = []
     params = inspect.signature(fn).parameters
     for name, param in params.items():
-        if param.kind == inspect.Parameter.KEYWORD_ONLY and param.default == inspect.Parameter.empty:
+        if (
+            param.kind == inspect.Parameter.KEYWORD_ONLY
+            and param.default == inspect.Parameter.empty
+        ):
             args.append(name)
     return tuple(args)
 
@@ -145,10 +168,13 @@ def get_named_kw_args(fn):
     args = []
     params = inspect.signature(fn).parameters
     for name, param in params.items():
-        if param.kind == inspect.Parameter.KEYWORD_ONLY or param.kind == inspect.Parameter.POSITIONAL_OR_KEYWORD:
+        if (
+            param.kind == inspect.Parameter.KEYWORD_ONLY
+            or param.kind == inspect.Parameter.POSITIONAL_OR_KEYWORD
+        ):
             args.append(name)
 
-    logger.LOG_TRACE('func %s has args %s', fn.__name__, args)
+    logger.LOG_TRACE("func %s has args %s", fn.__name__, args)
     return tuple(args)
 
 
@@ -156,7 +182,10 @@ def has_named_kw_args(fn):
     params = inspect.signature(fn).parameters
     for name, param in params.items():
         # KEYWORD_ONLY和POSITIONAL_OR_KEYWORD作同一类参数处理
-        if param.kind == inspect.Parameter.KEYWORD_ONLY or param.kind == inspect.Parameter.POSITIONAL_OR_KEYWORD:
+        if (
+            param.kind == inspect.Parameter.KEYWORD_ONLY
+            or param.kind == inspect.Parameter.POSITIONAL_OR_KEYWORD
+        ):
             return True
 
     return False
@@ -177,38 +206,43 @@ def has_request_arg(fn):
     found = False
     for name, param in params.items():
         # print(name, param.name, param.default, param.annotation, param.kind)
-        if name == 'request':
+        if name == "request":
             found = True
             continue
-        if found and (param.kind != inspect.Parameter.VAR_POSITIONAL
-                      and param.kind != inspect.Parameter.KEYWORD_ONLY
-                      and param.kind != inspect.Parameter.VAR_KEYWORD):
+        if found and (
+            param.kind != inspect.Parameter.VAR_POSITIONAL
+            and param.kind != inspect.Parameter.KEYWORD_ONLY
+            and param.kind != inspect.Parameter.VAR_KEYWORD
+        ):
             raise ValueError(
-                'request parameter must be the last named parameter in function: %s%s'
-                % (fn.__name__, str(sig)))
+                "request parameter must be the last named parameter in function: %s%s"
+                % (fn.__name__, str(sig))
+            )
     return found
 
 
 async def parse_post_param(request):
     if not request.content_type:
-        raise BadRequestError('Missing Content-Type.')
+        raise BadRequestError("Missing Content-Type.")
 
     ct = request.content_type.lower()
 
-    if ct.startswith('application/json'):
+    if ct.startswith("application/json"):
         params = await request.json()
         if not isinstance(params, dict):
-            raise BadRequestError('JSON body must be object.')
+            raise BadRequestError("JSON body must be object.")
 
         return params
 
-    if ct.startswith('application/x-www-form-urlencoded') or ct.startswith(
-            'multipart/form-data') or ct.startswith(
-                'application/octet-stream'):
+    if (
+        ct.startswith("application/x-www-form-urlencoded")
+        or ct.startswith("multipart/form-data")
+        or ct.startswith("application/octet-stream")
+    ):
         params = await request.post()
         return dict(**params)
 
-    raise BadRequestError('Unsupported Content-Type:%s' % ct)
+    raise BadRequestError("Unsupported Content-Type:%s" % ct)
 
 
 class RequestHandler(object):
@@ -222,15 +256,25 @@ class RequestHandler(object):
         self._required_kw_args = get_required_kw_args(fn)
 
     async def __parse_args(self, request):
-        print("fn:", self._func.__name__, "|_has_request_arg:",
-              self._has_request_arg, "|_has_var_kw_arg:", self._has_var_kw_arg,
-              "|_has_named_kw_args:", self._has_named_kw_args,
-              "|_named_kw_args", self._named_kw_args, "|_required_kw_args:",
-              self._required_kw_args)
+        print(
+            "fn:",
+            self._func.__name__,
+            "|_has_request_arg:",
+            self._has_request_arg,
+            "|_has_var_kw_arg:",
+            self._has_var_kw_arg,
+            "|_has_named_kw_args:",
+            self._has_named_kw_args,
+            "|_named_kw_args",
+            self._named_kw_args,
+            "|_required_kw_args:",
+            self._required_kw_args,
+        )
 
-        if not (self._has_var_kw_arg or self._has_named_kw_args
-                or self._has_request_arg):
-            logger.LOG_INFO('%s has no args' % self._func.__name__)
+        if not (
+            self._has_var_kw_arg or self._has_named_kw_args or self._has_request_arg
+        ):
+            logger.LOG_INFO("%s has no args" % self._func.__name__)
             return {}
 
         kw = {}
@@ -265,11 +309,11 @@ class RequestHandler(object):
                 continue
 
             if not name in query_dict:
-                if post_params is None and request.method == 'POST':
+                if post_params is None and request.method == "POST":
                     post_params = await parse_post_param(request)
 
                 if post_params is None:
-                    logger.LOG_WARNING('no post parameters.')
+                    logger.LOG_WARNING("no post parameters.")
                     continue
 
                 if name in post_params:
@@ -277,14 +321,14 @@ class RequestHandler(object):
                     continue
 
         if self._has_request_arg:
-            kw['request'] = request
+            kw["request"] = request
         # # check required kw:
         if self._has_request_arg:
             for name in self._required_kw_args:
                 if not name in kw:
-                    raise BadRequestError('Missing argument: %s' % name)
+                    raise BadRequestError("Missing argument: %s" % name)
 
-        logger.LOG_INFO('call with args: %s' % str(kw))
+        logger.LOG_INFO("call with args: %s" % str(kw))
 
         return kw
 
@@ -351,30 +395,35 @@ class RequestHandler(object):
 
         if isinstance(r, bytes):
             resp = web.Response(body=r)
-            resp.content_type = 'application/octet-stream'
+            resp.content_type = "application/octet-stream"
             return resp
 
         if isinstance(r, str):
-            if r.startswith('redirect:'):
+            if r.startswith("redirect:"):
                 return web.HTTPFound(r[9:])
-            resp = web.Response(body=r.encode('utf-8'))
-            resp.content_type = 'text/html;charset=utf-8'
+            resp = web.Response(body=r.encode("utf-8"))
+            resp.content_type = "text/html;charset=utf-8"
             return resp
 
         if isinstance(r, dict):
-            template = r.get('__template__')
+            template = r.get("__template__")
             if template is None:
-                resp = web.Response(body=json.dumps(
-                    r, ensure_ascii=False,
-                    default=lambda o: o.__dict__).encode('utf-8'))
-                resp.content_type = 'application/json;charset=utf-8'
+                resp = web.Response(
+                    body=json.dumps(
+                        r, ensure_ascii=False, default=lambda o: o.__dict__
+                    ).encode("utf-8")
+                )
+                resp.content_type = "application/json;charset=utf-8"
                 return resp
             else:
                 # r['__user__'] = request.__user__
                 resp = web.Response(
-                    body=self._app['__templating__'].get_template(
-                        template).render(**r).encode('utf-8'))
-                resp.content_type = 'text/html;charset=utf-8'
+                    body=self._app["__templating__"]
+                    .get_template(template)
+                    .render(**r)
+                    .encode("utf-8")
+                )
+                resp.content_type = "text/html;charset=utf-8"
                 return resp
 
         # TODO 下面代码有问题，待确认
@@ -388,9 +437,8 @@ class RequestHandler(object):
 
         # default:
         # 默认按json传递数据 TODO 确定是否合适，是否有其他选择
-        resp = web.Response(
-            body=json.dumps(r, ensure_ascii=False).encode('utf-8'))
-        resp.content_type = 'application/json;charset=utf-8'
+        resp = web.Response(body=json.dumps(r, ensure_ascii=False).encode("utf-8"))
+        resp.content_type = "application/json;charset=utf-8"
         # resp = web.Response(body=r)
         # resp.content_type = 'text/plain;charset=utf-8'
 
@@ -430,7 +478,7 @@ class RequestHandler(object):
 
         try:
             r = await self._func(**kw)
-            if getattr(self._func, '__stream__', False):
+            if getattr(self._func, "__stream__", False):
                 return r
             rsp = self._make_response(r, request)
             return rsp
@@ -440,26 +488,32 @@ class RequestHandler(object):
 
 
 def add_static(app):
-    path = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'static')
-    app.router.add_static('/static/', path)
-    logging.info('add static %s => %s' % ('/static/', path))
+    path = os.path.join(os.path.dirname(os.path.abspath(__file__)), "static")
+    app.router.add_static("/static/", path)
+    logging.info("add static %s => %s" % ("/static/", path))
 
 
 def add_route(app, fn):
-    method = getattr(fn, '__method__', None)
-    path = getattr(fn, '__route__', None)
+    method = getattr(fn, "__method__", None)
+    path = getattr(fn, "__route__", None)
     if path is None or method is None:
-        raise ValueError('@get or @post not defined in %s.' % str(fn))
-    if not asyncio.iscoroutinefunction(fn) and not inspect.isgeneratorfunction(
-            fn):
+        raise ValueError("@get or @post not defined in %s." % str(fn))
+    if not asyncio.iscoroutinefunction(fn) and not inspect.isgeneratorfunction(fn):
         # Convert sync function to async wrapper
         @functools.wraps(fn)
         async def async_wrapper(*args, **kwargs):
             return fn(*args, **kwargs)
+
         fn = async_wrapper
-    logging.info('add route %s %s => %s(%s)' %
-                 (method, path, fn.__name__, ', '.join(
-                     inspect.signature(fn).parameters.keys())))
+    logging.info(
+        "add route %s %s => %s(%s)"
+        % (
+            method,
+            path,
+            fn.__name__,
+            ", ".join(inspect.signature(fn).parameters.keys()),
+        )
+    )
     app.router.add_route(method, path, RequestHandler(app, fn))
 
 
@@ -484,7 +538,6 @@ def import_module_from_spec(module_spec):
     """
     # module = importlib.util.module_from_spec(module_spec)
     module = module_from_spec(module_spec)
-    
 
     module_spec.loader.exec_module(module)
     return module
@@ -500,16 +553,16 @@ def find_abs_modules_of_pkg(package):
                 if fn == "__init__.py" or fn == "__init__.pyc":
                     continue
 
-                if not fn.split('.')[1] == "py":
+                if not fn.split(".")[1] == "py":
                     # 不是py文件，跳过
                     continue
 
-                name = fn.split('.')[0]
+                name = fn.split(".")[0]
 
                 root_name = root.split(path)[1]
 
-                if root_name != '':
-                    root_name = '.'.join(root_name.split(os.path.sep))
+                if root_name != "":
+                    root_name = ".".join(root_name.split(os.path.sep))
                     modname = package.__name__ + root_name + "." + name
                 else:
                     modname = package.__name__ + "." + name
@@ -522,12 +575,12 @@ def find_abs_modules_of_pkg(package):
 
 
 def load_all_of_packages(package_or_module):
-    '''package: 包或者名字'''
+    """package: 包或者名字"""
     if type(package_or_module) == str:
         module_spec = check_module(package_or_module)
         package_or_module = import_module_from_spec(module_spec)
 
-    path = getattr(package_or_module, '__path__', None)
+    path = getattr(package_or_module, "__path__", None)
     if path is not None:
         modules = find_abs_modules_of_pkg(package_or_module)
         return modules
@@ -544,15 +597,15 @@ def mod_loader(mdl_name):
 
 
 def _find_mod_fn(mod):
-    '''查找模块中所有有注解的方法'''
+    """查找模块中所有有注解的方法"""
     fns = []
     for attr in dir(mod):
-        if attr.startswith('_'):
+        if attr.startswith("_"):
             continue
         fn = getattr(mod, attr)
         if callable(fn):
-            method = getattr(fn, '__method__', None)
-            path = getattr(fn, '__route__', None)
+            method = getattr(fn, "__method__", None)
+            path = getattr(fn, "__route__", None)
             if method and path:
                 fns.append(fn)
 
@@ -560,10 +613,10 @@ def _find_mod_fn(mod):
 
 
 def add_routes(app, package_name):
-    '''
+    """
     package_name:可以是包的名称、模块的名称、包或者模块。一般为包名。
     函数实现扫描功能，会扫描包下面所有的模块、包或者命名空间，将所有有路径注解的方法注册到路由中。
-    '''
+    """
 
     mods = load_all_of_packages(package_name)
 

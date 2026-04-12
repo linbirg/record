@@ -17,6 +17,7 @@ async def index():
 
 
 @post("/user/submitUser.json")
+@ResponseBody
 async def submit(userName, nickname, password):
     md_str = hashlib.md5(password.encode("utf8")).hexdigest()
     user = User(username=userName, nickname=nickname, password=md_str)
@@ -39,6 +40,7 @@ async def show_user(userId):
 
 
 @post("/user/{userId}/reset")
+@ResponseBody
 async def reset_passwd(userId, new_passwd):
     assert userId != 0
 
