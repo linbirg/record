@@ -2,7 +2,7 @@
 # -*- coding:utf-8 -*-
 # Author: yizr
 
-from lib.yom_sqlite import Model, IntField
+from lib import Model, IntField
 from lib import logger
 
 import datetime

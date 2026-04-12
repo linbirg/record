@@ -1,4 +1,4 @@
-from lib.yom import Model
+from lib import Model
 from .base import AutoIdModel
 from . import field_desc as fd
 

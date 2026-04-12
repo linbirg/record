@@ -1,5 +1,5 @@
 from os import name
-from lib.yom import Model
+from lib import Model
 
 from . import field_desc as fd
 from .base import AutoIdModel

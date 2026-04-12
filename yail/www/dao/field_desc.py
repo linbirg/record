@@ -13,7 +13,7 @@
 # sys.path.append(code_dir)
 
 # from lib import dbutil
-from lib.yom_sqlite import CharField, IntField, DoubleField, TimeStampField, StringField
+from lib import CharField, IntField, DoubleField, TimeStampField, StringField
 
 """
 常用的业务字段的定义应该统一放在这里，一是 简化对数据表的定义和使用，减少参数的数量 二是 有利于统一业务中的字段，避免重复和不一致
