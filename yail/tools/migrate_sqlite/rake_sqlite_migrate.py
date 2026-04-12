@@ -91,6 +91,7 @@ def run_migrations(db_path=None):
         ("5_t_car_info", "car_info"),
         ("6_t_car_pics", "car_pics"),
         ("7_chat_message", "chat_message"),
+        ("8_rename_tables", "rename_tables"),
     ]
 
     for file_name, class_name in migration_files:

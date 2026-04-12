@@ -6,7 +6,7 @@ import datetime
 
 
 class User(AutoIdModel):
-    __table__ = "user"
+    __table__ = "t_user"
 
     user_id = fd.UserIDField(primary_key=True, auto_increment=True)
 
