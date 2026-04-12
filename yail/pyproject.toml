@@ -9,6 +9,7 @@ dependencies = [
     "aiomysql",
     "cryptography",
     "openai>=1.0.0",
+    "aiosqlite>=0.19.0",
 ]
 
 [project.optional-dependencies]
@@ -19,3 +20,4 @@ dev = [
 [tool.pdm.scripts]
 start = "python app.py"
 migrate = "python tools/migrate/rake_migrate.py"
+migrate_sqlite = "python tools/migrate_sqlite/rake_sqlite_migrate.py"

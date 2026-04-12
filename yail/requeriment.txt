@@ -1,6 +1,6 @@
 watchdog
-#aiohttp==3.7.4
 aiohttp>=3.7.4
 aiomysql
 cryptography
 openai>=1.0.0
+aiosqlite>=0.19.0
