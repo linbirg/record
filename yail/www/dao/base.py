@@ -2,7 +2,7 @@
 # -*- coding:utf-8 -*-
 # Author: yizr
 
-from lib.yom import Model, IntField
+from lib.yom_sqlite import Model, IntField
 from lib import logger
 
 import datetime
@@ -45,8 +45,8 @@ class AutoIdModel(Model):
             vals += ["?"]
 
             if key in ["created_at", "updated_at"]:
-                self.created_at = datetime.datetime.now()
-                self.updated_at = datetime.datetime.now()
+                self.created_at = datetime.datetime.now().isoformat()
+                self.updated_at = datetime.datetime.now().isoformat()
 
             args += [self[key]]
 
@@ -57,12 +57,12 @@ class AutoIdModel(Model):
 
         logger.LOG_TRACE("to execute:%s args:%s", sql, args)
         conn = await self.get_connection()
-        async with conn:
-            cur = await conn.cursor()
-            await cur.execute(sql.replace("?", "%s"), args or ())
+        with conn:
+            cur = conn.cursor()
+            cur.execute(sql, args or ())
             affected = cur.rowcount
             last_row_id = cur.lastrowid
-            await cur.close()
+            cur.close()
 
         auto_key = list(autos.keys())[0]
         self[auto_key] = last_row_id

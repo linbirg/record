@@ -28,6 +28,7 @@ class week_note(RakeMigrate):
                 week_count TEXT,
                 week_day TEXT,
                 rec_date TEXT,
+                year TEXT,
                 updated_at TEXT,
                 created_at TEXT
             )

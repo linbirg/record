@@ -1,7 +1,6 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 
-from lib.yom import Model
 from .base import AutoIdModel
 from . import field_desc as fd
 
