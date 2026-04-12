@@ -19,7 +19,7 @@ class VoWeekNote(ViewObj):
         vo.userName = model.user_name
 
         vo.weekCount = model.week_count
-        vo.weekDay = model.week_day
+        vo.weekDay = int(model.week_day)
         vo.details = []
 
         return vo
