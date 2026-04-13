@@ -1,7 +1,7 @@
 import os
 from pathlib import Path
 
-DB_TYPE = os.getenv("DB_TYPE", "sqlite")
+DB_TYPE = os.getenv("DB_TYPE", "mysql")
 
 ROOT = "D:/project/linbirg/ww/ww/record/yail"
 PIC_DIR = "D:/project/linbirg/ww/ww/record/frontEnd/static/car"

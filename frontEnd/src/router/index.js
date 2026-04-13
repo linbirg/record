@@ -37,11 +37,10 @@ const router = new Router({
   }, {
     path: '/container',
     component: Layout,
-    children: [
-{
-        path: '/carsReg',
-        component: CarsReg
-      }, {
+    children: [{
+      path: '/carsReg',
+      component: CarsReg
+    }, {
       path: '/record/personal',
       component: WeekRecords
     }, {
@@ -60,9 +59,6 @@ const router = new Router({
       path: '/addressbook',
       component: AddressBook
     }, {
-      path: '/carsReg',
-      component: CarsReg
-    },{
       path: '/report',
       component: Reports
     }]

@@ -136,6 +136,8 @@ def ResponseBody(coro):
     decorator.__name__ = coro.__name__
     decorator.__qualname__ = coro.__qualname__
     decorator.__signature__ = inspect.signature(coro)
+    decorator.__request_body_arg__ = getattr(coro, '__request_body_arg__', None)
+    decorator.__request_body_type__ = getattr(coro, '__request_body_type__', None)
     return decorator
 
 
@@ -153,6 +155,8 @@ def stream(coro):
     wrapper.__qualname__ = coro.__qualname__
     wrapper.__signature__ = inspect.signature(coro)
     wrapper.__stream__ = True
+    wrapper.__request_body_arg__ = getattr(coro, '__request_body_arg__', None)
+    wrapper.__request_body_type__ = getattr(coro, '__request_body_type__', None)
     return wrapper
 
 
