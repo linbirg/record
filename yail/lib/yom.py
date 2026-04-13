@@ -375,27 +375,46 @@ class Model(dict, metaclass=ModelMetaClass):
         return createrow
 
     @classmethod
-    @classmethod
     async def get_connection(cls):
         pool = Pool.pool()
+        logger.LOG_TRACE("pool: %s", pool)
+        if pool is None:
+            raise RuntimeError("Connection pool is None! create_pool may not have been called.")
+        logger.LOG_TRACE("acquiring connection from pool %s (size: %s)...", id(pool), pool.size)
         conn = await pool.acquire()
+        logger.LOG_TRACE("connection acquired: %s", id(conn))
         return conn
 
     @classmethod
     async def select(cls, sql, args=None, size=None):
         logger.LOG_TRACE("to select:%s", sql)
         conn = await cls.get_connection()
-        async with conn:
+        logger.LOG_TRACE("got connection: %s", id(conn))
+        rs = None
+        try:
             cur = await conn.cursor(aiomysql.DictCursor)
+            logger.LOG_TRACE("executing: %s with args: %s", sql, args)
             await cur.execute(sql.replace("?", "%s"), args or ())
+            logger.LOG_TRACE("query executed, fetching results...")
             cur.rowfactory = cls.__func_create_row__(cur)
             if size:
                 rs = await cur.fetchmany(size)
             else:
                 rs = await cur.fetchall()
+            logger.LOG_TRACE("results fetched: %s rows", len(rs) if rs else 0)
             await cur.close()
             logger.LOG_DEBUG("rows returned: %s" % len(rs))
-            return rs
+        except Exception as e:
+            logger.LOG_ERROR("Error in select: %s", e)
+            raise
+        finally:
+            try:
+                if conn is not None:
+                    Pool.pool().release(conn)
+                    logger.LOG_TRACE("connection %s released to pool", id(conn))
+            except Exception as e:
+                logger.LOG_ERROR("Error releasing connection: %s", e)
+        return rs
 
     # added by yizr@2024.07.25
     # @classmethod
@@ -409,12 +428,22 @@ class Model(dict, metaclass=ModelMetaClass):
     async def execute(cls, sql, args=None):
         logger.LOG_TRACE("to execute:%s", sql)
         conn = await cls.get_connection()
-        async with conn:
+        try:
             cur = await conn.cursor()
             await cur.execute(sql.replace("?", "%s"), args or ())
             affected = cur.rowcount
             await cur.close()
-            return affected
+        except Exception as e:
+            logger.LOG_ERROR("Error in execute: %s", e)
+            raise
+        finally:
+            try:
+                if conn is not None:
+                    Pool.pool().release(conn)
+                    logger.LOG_TRACE("connection %s released to pool", id(conn))
+            except Exception as e:
+                logger.LOG_ERROR("Error releasing connection: %s", e)
+        return affected
 
     @classmethod
     async def find_where(cls, where=None, *args):
