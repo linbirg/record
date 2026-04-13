@@ -28,27 +28,24 @@ import datetime
 
 
 class Pool(object):
-
     __pool = None
 
     @classmethod
-    @asyncio.coroutine
-    def create_pool(cls, **kw):
-        # logger.LOG_INFO('create database connection pool...')
+    async def create_pool(cls, **kw):
         if cls.__pool is not None:
             return cls.__pool
 
-        cls.__pool = yield from aiomysql.create_pool(
-            host=kw.get('host', 'localhost'),
-            port=kw.get('port', 3306),
-            user=kw['user'],
-            password=kw['password'],
-            db=kw['db'],
-            charset=kw.get('charset', 'utf8'),
-            autocommit=kw.get('autocommit', True),
-            maxsize=kw.get('maxsize', 10),
-            minsize=kw.get('minsize', 1),
-            loop=None,  # 默认用asyncio.get_event_loop()
+        cls.__pool = await aiomysql.create_pool(
+            host=kw.get("host", "localhost"),
+            port=kw.get("port", 3306),
+            user=kw["user"],
+            password=kw["password"],
+            db=kw["db"],
+            charset=kw.get("charset", "utf8"),
+            autocommit=kw.get("autocommit", True),
+            maxsize=kw.get("maxsize", 10),
+            minsize=kw.get("minsize", 1),
+            loop=None,
         )
 
     @classmethod
@@ -79,7 +76,7 @@ class Field(object):
         if val:
             __ddl__ = "%s %s" % (__ddl__, "default " + str(val))
 
-        return __ddl__ + ' comment \'' + self.description + '\''
+        return __ddl__ + " comment '" + self.description + "'"
 
     def __get_defualt__(self):
         if self.default is not None:
@@ -90,13 +87,15 @@ class Field(object):
 
 
 class StringField(Field):
-    def __init__(self,
-                 name=None,
-                 primary_key=False,
-                 unique=False,
-                 default=None,
-                 ddl="varchar(255)",
-                 desc=""):
+    def __init__(
+        self,
+        name=None,
+        primary_key=False,
+        unique=False,
+        default=None,
+        ddl="varchar(255)",
+        desc="",
+    ):
 
         if unique:
             ddl = ddl + " unique "
@@ -105,13 +104,9 @@ class StringField(Field):
 
 
 class CharField(Field):
-    def __init__(self,
-                 name=None,
-                 primary_key=False,
-                 unique=False,
-                 default=None,
-                 size=1,
-                 desc=""):
+    def __init__(
+        self, name=None, primary_key=False, unique=False, default=None, size=1, desc=""
+    ):
 
         _ddl_ = "CHAR(%d)" % size
         if unique:
@@ -123,46 +118,44 @@ class CharField(Field):
     def rpad(self, val, padding=b" ", db_internal_encoding="gbk"):
         if val is None:
             val = ""
-        return (val.encode(db_internal_encoding).ljust(
-            self.size, padding).decode(db_internal_encoding))
+        return (
+            val.encode(db_internal_encoding)
+            .ljust(self.size, padding)
+            .decode(db_internal_encoding)
+        )
 
 
 class DoubleField(Field):
-    def __init__(self,
-                 name=None,
-                 primary_key=False,
-                 default=0.0,
-                 size=(18, 2),
-                 desc=""):
-        super().__init__(name, "NUMBER(%d,%d)" % size, primary_key, default,
-                         desc)
+    def __init__(
+        self, name=None, primary_key=False, default=0.0, size=(18, 2), desc=""
+    ):
+        super().__init__(name, "NUMBER(%d,%d)" % size, primary_key, default, desc)
 
 
 class IntField(Field):
-    def __init__(self,
-                 name=None,
-                 primary_key=False,
-                 auto_increment=False,
-                 default=0,
-                 desc=""):
+    def __init__(
+        self, name=None, primary_key=False, auto_increment=False, default=0, desc=""
+    ):
 
-        _ddl_ = 'INT'
+        _ddl_ = "INT"
 
         self.auto_increment = auto_increment
 
         if self.auto_increment:
-            _ddl_ = _ddl_ + ' auto_increment '
+            _ddl_ = _ddl_ + " auto_increment "
 
         super().__init__(name, _ddl_, primary_key, default, desc)
 
 
 class TimeStampField(Field):
-    def __init__(self,
-                 name=None,
-                 primary_key=False,
-                 default=None,
-                 column_type="TIMESTAMP(6)",
-                 desc=""):
+    def __init__(
+        self,
+        name=None,
+        primary_key=False,
+        default=None,
+        column_type="TIMESTAMP(6)",
+        desc="",
+    ):
         super().__init__(name, column_type, primary_key, default, desc)
 
 
@@ -222,8 +215,7 @@ class ModelMetaClass(type):
         attrs["__fields__"] = fields
 
         def __get_sql_cols_list(cols):
-            return ",".join(
-                map(lambda k: "%s" % (mappings.get(k).name or k), cols))
+            return ",".join(map(lambda k: "%s" % (mappings.get(k).name or k), cols))
 
         def __get_sql_params_list(cols):
             return ",".join(map(lambda k: "?", cols))
@@ -233,14 +225,16 @@ class ModelMetaClass(type):
                 map(
                     lambda k: "%s=?" % (mappings.get(k).name or k),
                     cols,
-                ))
+                )
+            )
 
         def __get_sql_where_con_pairs_list(cols):
             return " and ".join(
                 map(
                     lambda k: "%s=?" % (mappings.get(k).name or k),
                     cols,
-                ))
+                )
+            )
 
         # 只是为了Model编写方便，放在元类里和放在Model里都可以
         # attrs["__select__"] = "select %s,%s from %s " % (
@@ -252,7 +246,8 @@ class ModelMetaClass(type):
         attrs["__select__"] = "select {pkeys},{fields} from {table} ".format(
             pkeys=__get_sql_cols_list(pkeys),
             fields=__get_sql_cols_list(fields),
-            table=tableName)
+            table=tableName,
+        )
 
         attrs["__update__"] = "update %s set %s where %s" % (
             tableName,
@@ -297,8 +292,7 @@ class Model(dict, metaclass=ModelMetaClass):
         field = self.__mappings__[key]
         value = None
         if field.default is not None:
-            value = field.default() if callable(
-                field.default) else field.default
+            value = field.default() if callable(field.default) else field.default
 
         setattr(self, key, value)
         return value
@@ -313,8 +307,7 @@ class Model(dict, metaclass=ModelMetaClass):
         field = self.__mappings__[key]
         if value is None:
             if field.default is not None:
-                value = field.default() if callable(
-                    field.default) else field.default
+                value = field.default() if callable(field.default) else field.default
                 # setattr(self, key, value)  # TODO get函数不写属性,确定是否需要set。
 
         return self.padding_val_if_neccesary(value, key)
@@ -344,9 +337,9 @@ class Model(dict, metaclass=ModelMetaClass):
         if not isinstance(field, CharField):
             return val
 
-        return field.rpad(val,
-                          padding=b" ",
-                          db_internal_encoding=cls.__db_internal_encoding)
+        return field.rpad(
+            val, padding=b" ", db_internal_encoding=cls.__db_internal_encoding
+        )
 
     @classmethod
     def __get_key_name__(cls, key):
@@ -357,8 +350,7 @@ class Model(dict, metaclass=ModelMetaClass):
 
     @classmethod
     def __join__(cls, format, cols, spliter=","):
-        return spliter.join(
-            map(lambda k: format % (cls.__get_key_name__(k)), cols))
+        return spliter.join(map(lambda k: format % (cls.__get_key_name__(k)), cols))
 
     @classmethod
     def get_sql_cols_list(cls, cols, spliter=","):
@@ -370,8 +362,7 @@ class Model(dict, metaclass=ModelMetaClass):
 
     @classmethod
     def get_sql_where_con_pairs_list(cls, cols):
-        return " and ".join(
-            map(lambda k: '{}=?'.format(cls.__get_key_name__(k)), cols))
+        return " and ".join(map(lambda k: "{}=?".format(cls.__get_key_name__(k)), cols))
 
     @staticmethod
     def __func_create_row__(cursor):
@@ -384,29 +375,28 @@ class Model(dict, metaclass=ModelMetaClass):
         return createrow
 
     @classmethod
-    @asyncio.coroutine
-    def get_connection(cls):
-        conn = yield from Pool.pool()
+    @classmethod
+    async def get_connection(cls):
+        pool = Pool.pool()
+        conn = await pool.acquire()
         return conn
 
     @classmethod
-    @asyncio.coroutine
-    def select(cls, sql, args=None, size=None):
-        # global __pool
-        # print("to select:", sql)
+    async def select(cls, sql, args=None, size=None):
         logger.LOG_TRACE("to select:%s", sql)
-        with (yield from cls.get_connection()) as conn:
-            cur = yield from conn.cursor(aiomysql.DictCursor)
-            yield from cur.execute(sql.replace('?', '%s'), args or ())
+        conn = await cls.get_connection()
+        async with conn:
+            cur = await conn.cursor(aiomysql.DictCursor)
+            await cur.execute(sql.replace("?", "%s"), args or ())
             cur.rowfactory = cls.__func_create_row__(cur)
             if size:
-                rs = yield from cur.fetchmany(size)
+                rs = await cur.fetchmany(size)
             else:
-                rs = yield from cur.fetchall()
-            yield from cur.close()
-            logger.LOG_DEBUG('rows returned: %s' % len(rs))
+                rs = await cur.fetchall()
+            await cur.close()
+            logger.LOG_DEBUG("rows returned: %s" % len(rs))
             return rs
-    
+
     # added by yizr@2024.07.25
     # @classmethod
     # @asyncio.coroutine
@@ -416,48 +406,41 @@ class Model(dict, metaclass=ModelMetaClass):
     #     return rs
 
     @classmethod
-    @asyncio.coroutine
-    def execute(cls, sql, args=None):
-        # global __pool
-        # print(sql, args)
+    async def execute(cls, sql, args=None):
         logger.LOG_TRACE("to execute:%s", sql)
-        with (yield from cls.get_connection()) as conn:
-            cur = yield from conn.cursor()
-            yield from cur.execute(sql.replace('?', '%s'), args or ())
+        conn = await cls.get_connection()
+        async with conn:
+            cur = await conn.cursor()
+            await cur.execute(sql.replace("?", "%s"), args or ())
             affected = cur.rowcount
-            yield from cur.close()
+            await cur.close()
             return affected
 
     @classmethod
-    @asyncio.coroutine
-    def find_where(cls, where=None, *args):
-        # 此函数不会做padding等补全操作
+    async def find_where(cls, where=None, *args):
         sql = [cls.__select__]
         if where:
             sql.append("where")
             sql.append(where)
 
-        rs = yield from cls.select(" ".join(sql), args)
+        rs = await cls.select(" ".join(sql), args)
 
-        return [cls.row_mapper(r) for r in rs]  # 返回的是一个实例对象引用
-    
+        return [cls.row_mapper(r) for r in rs]
+
     # added by yizr@2024.07.26
     @classmethod
-    @asyncio.coroutine
-    def count_where(cls, where=None, *args):
-        # 此函数不会做padding等补全操作
+    async def count_where(cls, where=None, *args):
         sql = [cls.__count__]
         if where:
             sql.append("where")
             sql.append(where)
 
-        rs = yield from cls.select(" ".join(sql), args)
+        rs = await cls.select(" ".join(sql), args)
 
-        return rs[0]["count(1)"]  
+        return rs[0]["count(1)"]
 
     @classmethod
-    @asyncio.coroutine
-    def find(cls, **pks):
+    async def find(cls, **pks):
         keys = []
         fields = []
         args = {}
@@ -478,14 +461,13 @@ class Model(dict, metaclass=ModelMetaClass):
         for k in fields:
             args_val.append(args[k])
 
-        rows = yield from cls.find_where(where, *args_val)
+        rows = await cls.find_where(where, *args_val)
         return rows
 
     @classmethod
-    @asyncio.coroutine
-    def find_one(cls, **pks):
-        '''返回一条数据，如果没有则返回None，多条数据会抛异常.'''
-        rets = yield from cls.find(**pks)
+    async def find_one(cls, **pks):
+        """返回一条数据，如果没有则返回None，多条数据会抛异常."""
+        rets = await cls.find(**pks)
         if rets is None or len(rets) == 0:
             return None
 
@@ -495,14 +477,12 @@ class Model(dict, metaclass=ModelMetaClass):
         return rets[0]
 
     @classmethod
-    @asyncio.coroutine
-    def find_all(cls):
-        rows = yield from cls.find()
+    async def find_all(cls):
+        rows = await cls.find()
         return rows
 
     @classmethod
-    @asyncio.coroutine
-    def find_one_with_lock(cls, nowait=False, time_out=5, **pks):
+    async def find_one_with_lock(cls, nowait=False, time_out=5, **pks):
         assert isinstance(time_out, int)
 
         if len(pks) <= 0:
@@ -522,38 +502,38 @@ class Model(dict, metaclass=ModelMetaClass):
         for_update_sql = "for update {0}".format(wait_sql)
         _lock_sql = "{0} {1} {2}".format(cls.__select__, where, for_update_sql)
 
-        # TODO 测试with连接的自动提交是否对此有影响
-        rs = yield from cls.select(_lock_sql, args)
+        rs = await cls.select(_lock_sql, args)
 
         if len(rs) > 1:
-            raise RuntimeError("find_one_with_lock：应该返回一条数据，但是返回了多条数据。")
+            raise RuntimeError(
+                "find_one_with_lock：应该返回一条数据，但是返回了多条数据。"
+            )
 
         if rs is None or len(rs) == 0:
             return None
 
         return cls.row_mapper(rs[0])
 
-    @asyncio.coroutine
-    def save(self):
+    async def save(self):
         self.created_at = datetime.datetime.now()
         self.updated_at = datetime.datetime.now()
-        affected = yield from self.execute(
-            self.__insert__, self.__get_args__(self.__mappings__.keys()))
+        affected = await self.execute(
+            self.__insert__, self.__get_args__(self.__mappings__.keys())
+        )
 
         return affected
 
-    @asyncio.coroutine
-    def delete(self):
-        affected = yield from self.execute(self.__delete__,
-                                           self.__get_args__(self.__pKeys__))
+    async def delete(self):
+        affected = await self.execute(
+            self.__delete__, self.__get_args__(self.__pKeys__)
+        )
 
         return affected
 
-    @asyncio.coroutine
-    def update(self):
+    async def update(self):
         self.updated_at = datetime.datetime.now()
-        affected = yield from self.execute(
-            self.__update__,
-            self.__get_args__(self.__fields__ + self.__pKeys__))
+        affected = await self.execute(
+            self.__update__, self.__get_args__(self.__fields__ + self.__pKeys__)
+        )
 
         return affected
