@@ -305,7 +305,7 @@ class Model(dict, metaclass=ModelMetaClass):
     @classmethod
     async def get_connection(cls):
         db_path = Pool.pool()
-        conn = sqlite3.connect(db_path)
+        conn = sqlite3.connect(db_path, isolation_level=None)
         return conn
 
     @classmethod

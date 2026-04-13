@@ -7,7 +7,7 @@ import datetime
 
 
 class User(AutoIdModel):
-    __table__ = "user" if DB_TYPE == "mysql" else "t_user"
+    __table__ = "user" if DB_TYPE == "mysql" else "user"
 
     user_id = fd.UserIDField(primary_key=True, auto_increment=True)
 

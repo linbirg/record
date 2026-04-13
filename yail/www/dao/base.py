@@ -5,6 +5,7 @@
 from lib import Model, IntField
 from lib.yom import Pool
 from lib import logger
+from conf.db import DB_TYPE
 
 import datetime
 
@@ -45,11 +46,15 @@ class AutoIdModel(Model):
             cols += [field.name]
             vals += ["?"]
 
+            val = self[key]
             if key in ["created_at", "updated_at"]:
                 self.created_at = datetime.datetime.now().isoformat()
                 self.updated_at = datetime.datetime.now().isoformat()
-
-            args += [self[key]]
+                val = self[key]
+            elif isinstance(val, datetime.date):
+                val = val.isoformat()
+            
+            args.append(val)
 
         vals_sql = ",".join(vals)
         cols_sql = ",".join(cols)
@@ -59,13 +64,23 @@ class AutoIdModel(Model):
         logger.LOG_TRACE("to execute:%s args:%s", sql, args)
         conn = await self.get_connection()
         try:
-            cur = await conn.cursor()
-            await cur.execute(sql, args or ())
+            if DB_TYPE == "mysql":
+                cur = await conn.cursor()
+                await cur.execute(sql.replace("?", "%s"), args or ())
+            else:
+                cur = conn.cursor()
+                cur.execute(sql, args or ())
+                conn.commit()
+                conn.isolation_level = None
             affected = cur.rowcount
             last_row_id = cur.lastrowid
-            await cur.close()
+            cur.close()
         finally:
-            Pool.pool().release(conn)
+            if DB_TYPE == "mysql":
+                Pool.pool().release(conn)
+            else:
+                conn.close()
+                conn = None
 
         auto_key = list(autos.keys())[0]
         self[auto_key] = last_row_id

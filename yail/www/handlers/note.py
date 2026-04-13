@@ -126,7 +126,18 @@ async def add_detail(userId, weekCount, weekDay, desc, status):
 
     await detail.save()
 
-    return detail
+    return {
+        "detail_id": detail.detail_id,
+        "note_id": detail.note_id,
+        "user_id": detail.user_id,
+        "user_name": detail.user_name,
+        "rec_date": str(detail.rec_date) if detail.rec_date else None,
+        "week_day": detail.week_day,
+        "status": detail.status,
+        "desc": detail.desc,
+        "created_at": str(detail.created_at) if detail.created_at else None,
+        "updated_at": str(detail.updated_at) if detail.updated_at else None,
+    }
 
 
 @post("/note/detail/update")
