@@ -68,15 +68,16 @@ def migrate_table(mysql_conn, sqlite_conn, table_info):
     col_list = [c.strip() for c in columns.split(',')]
 
     mysql_cursor = mysql_conn.cursor(pymysql.cursors.DictCursor)
+    sqlite_cursor = sqlite_conn.cursor()
 
     try:
         mysql_cursor.execute(f"SELECT {columns} FROM {table_name}")
         rows = mysql_cursor.fetchall()
 
+        sqlite_cursor.execute(f"DELETE FROM {table_name}")
+
         if not rows:
             return 0
-
-        sqlite_cursor = sqlite_conn.cursor()
 
         placeholders = ','.join(['?' for _ in col_list])
         insert_sql = f"INSERT INTO {table_name} ({columns}) VALUES ({placeholders})"
@@ -105,8 +106,14 @@ def migrate_table(mysql_conn, sqlite_conn, table_info):
 
         return len(data_rows)
 
+    except pymysql.err.ProgrammingError as e:
+        if e.args[0] == 1146:
+            print(f"Table '{table_name}' doesn't exist in MySQL, skipping")
+            return 0
+        raise
     finally:
         mysql_cursor.close()
+        sqlite_cursor.close()
 
 
 def main():
