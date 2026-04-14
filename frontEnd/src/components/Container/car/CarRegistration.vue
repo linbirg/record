@@ -30,7 +30,6 @@
     <div class="step-content">
       <Step1Upload 
         v-if="currentStep === 1"
-        :ocrApiKey="ocrApiKey"
         @next="onStep1Next"
       />
       
@@ -66,12 +65,6 @@ export default {
     Step2Confirm,
     Step3Complete
   },
-  props: {
-    ocrApiKey: {
-      type: String,
-      default: ''
-    }
-  },
   data() {
     return {
       currentStep: 1,
@@ -91,9 +84,15 @@ export default {
     
     async onStep2Submit(formData) {
       try {
+        const requestData = {
+          ...formData,
+          drivingLicense: this.step1Data.drivingLicense || null,
+          driverLicense: this.step1Data.driverLicense || null
+        };
+        
         await this.post({
           url: 'car/add',
-          data: formData
+          data: requestData
         });
         
         this.submittedCar = {

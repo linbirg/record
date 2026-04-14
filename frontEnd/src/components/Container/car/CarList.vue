@@ -53,6 +53,15 @@
             </svg>
           </button>
         </div>
+        <div class="card-actions">
+          <button class="delete-btn" @click.stop="handleDelete(car)" title="删除">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <polyline points="3,6 5,6 21,6"/>
+              <path d="M19,6v14a2,2,0,0,1-2,2H7a2,2,0,0,1-2-2V6M8,6V4a2,2,0,0,1,2-2h4a2,2,0,0,1,2,2V6"/>
+            </svg>
+            <span>删除</span>
+          </button>
+        </div>
       </div>
 
       <!-- 空状态 -->
@@ -146,8 +155,7 @@
     >
       <CarRegistration 
         v-if="registrationDialogVisible"
-        :ocrApiKey="ocrApiKey"
-        @close="registrationDialogVisible = false"
+        @close="registrationDialogVisible = false; fetchCarList();"
       />
     </el-dialog>
   </div>
@@ -200,8 +208,7 @@ export default {
         { indices: [6, 7], color: "#4a3728" }, // 深棕
         { indices: [8, 9], color: "#2d3a4a" }, // 深灰蓝
       ],
-      ocrApiKey: '', // MiniMax API Key，后续配置
-    };
+      };
   },
   computed: {
     filteredCars() {
@@ -306,19 +313,7 @@ export default {
         license: "",
         abbr: "",
       };
-      this.getOcrConfig().then(() => {
-        this.registrationDialogVisible = true;
-      });
-    },
-
-    async getOcrConfig() {
-      try {
-        const config = await this.get({ url: 'car/config' });
-        this.ocrApiKey = config.minimaxApiKey || '';
-      } catch (error) {
-        console.error('获取 OCR 配置失败:', error);
-        this.ocrApiKey = '';
-      }
+      this.registrationDialogVisible = true;
     },
 
     showEditDialog(car) {
@@ -364,6 +359,24 @@ export default {
           .catch(() => {
             this.$message.error(this.isAdd ? "添加失败" : "更新失败");
           });
+      });
+    },
+
+    handleDelete(car) {
+      this.$confirm(`确定要删除车辆 "${car.name} - ${car.carNo}" 吗？`, '删除确认', {
+        confirmButtonText: '删除',
+        cancelButtonText: '取消',
+        type: 'warning',
+        confirmButtonClass: 'el-button--danger'
+      }).then(() => {
+        return this.post({
+          url: 'car/delete',
+          data: { no: car.no }
+        });
+      }).then(() => {
+        this.$message.success('删除成功');
+        this.loadCars();
+      }).catch(() => {
       });
     },
   },
@@ -483,7 +496,22 @@ export default {
 }
 
 .card-main {
-  padding-right: 32px;
+  padding-right: 0;
+}
+
+.card-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 8px;
+  max-height: 0;
+  overflow: hidden;
+  opacity: 0;
+  transition: max-height 0.2s, opacity 0.2s;
+}
+
+.car-card:hover .card-actions {
+  max-height: 40px;
+  opacity: 1;
 }
 
 .owner-name {
@@ -538,6 +566,31 @@ export default {
 
   &:hover {
     color: #3b82f6;
+  }
+}
+
+.delete-btn {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  padding: 6px 12px;
+  background: transparent;
+  border: 1px solid #e5e7eb;
+  border-radius: 6px;
+  color: #9ca3af;
+  cursor: pointer;
+  font-size: 13px;
+  transition: all 0.2s;
+
+  svg {
+    width: 16px;
+    height: 16px;
+  }
+
+  &:hover {
+    color: #ffffff;
+    background: #ee1d36;
+    border-color: #ee1d36;
   }
 }
 

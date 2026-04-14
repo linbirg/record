@@ -188,7 +188,7 @@ export default {
         dept: '',
         seqNoPrefix: 'No.',
         seqNoSuffix: '',
-        regDate: '',
+        regDate: new Date().toISOString().split('T')[0],
         carlicense: '',
         license: '',
         abbr: ''
@@ -205,8 +205,9 @@ export default {
           if (d.brand) this.form.brand = d.brand;
           if (d.model) this.form.model = d.model;
           if (d.regDate) this.form.regDate = d.regDate;
+          if (d.name) this.form.name = d.name;
         }
-        if (results.driver && results.driver.name) {
+        if (!this.form.name && results.driver && results.driver.name) {
           this.form.name = results.driver.name;
         }
       }

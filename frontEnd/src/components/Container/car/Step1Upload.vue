@@ -33,7 +33,7 @@
         @click="handleOcr"
       >
         <span v-if="isOcrLoading" class="loading-spinner"></span>
-        <span v-else>识别全部</span>
+        <span v-else>识别行驶证</span>
       </button>
       <button 
         class="btn btn-secondary"
@@ -49,17 +49,12 @@
 
 <script>
 import ImageUploader from './ImageUploader.vue';
+import { mapActions } from 'vuex';
 
 export default {
   name: 'Step1Upload',
   components: {
     ImageUploader
-  },
-  props: {
-    ocrApiKey: {
-      type: String,
-      default: ''
-    }
   },
   data() {
     return {
@@ -78,6 +73,7 @@ export default {
     }
   },
   methods: {
+    ...mapActions(['post']),
     onDrivingLicenseChange(data) {
       this.drivingLicense = data ? data.base64 : '';
     },
@@ -114,50 +110,11 @@ export default {
       }
     },
     async ocrImage(base64, type) {
-      // MiniMax Vision API 调用
-      const API_URL = 'https://api.minimax.chat/v1/text/chatcompletion_v2';
-      
-      let prompt = '';
-      if (type === 'driving') {
-        prompt = '请从这张行驶证图片中提取信息，返回JSON格式：车牌号(carNo)、车辆品牌(brand)、车辆型号(model)、注册日期(regDate)。只返回JSON，不要其他文字。';
-      } else {
-        prompt = '请从这张驾驶证图片中提取信息，返回JSON格式：姓名(name)。只返回JSON，不要其他文字。';
-      }
-      
-      const response = await fetch(API_URL, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${this.ocrApiKey}`
-        },
-        body: JSON.stringify({
-          model: 'MiniMax-VL01',
-          messages: [{
-            role: 'user',
-            content: [
-              { type: 'text', text: prompt },
-              { type: 'image_url', image_url: { url: base64 } }
-            ]
-          }]
-        })
+      const response = await this.post({
+        url: 'car/ocr',
+        data: { image: base64, type }
       });
-      
-      const data = await response.json();
-      
-      if (data.choices && data.choices[0] && data.choices[0].message) {
-        const content = data.choices[0].message.content;
-        // 尝试解析 JSON
-        try {
-          // 去除 markdown 代码块
-          const jsonStr = content.replace(/```json\n?/g, '').replace(/```\n?/g, '').trim();
-          return JSON.parse(jsonStr);
-        } catch (e) {
-          console.error('Parse OCR result failed:', e);
-          return this.parseTextResult(content, type);
-        }
-      }
-      
-      return null;
+      return response;
     },
     parseTextResult(text, type) {
       // 简单文本解析作为后备

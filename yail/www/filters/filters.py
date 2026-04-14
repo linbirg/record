@@ -58,7 +58,11 @@ async def data_factory(app, handler):
         if request.method == 'POST':
             if request.content_type.startswith('application/json'):
                 request.__data__ = await request.json()
-                logging.info('request json: %s' % str(request.__data__))
+                # 过滤掉大字段如图片 base64，避免日志过大
+                data_str = str(request.__data__)
+                if len(data_str) > 1000:
+                    data_str = data_str[:1000] + '...[truncated]'
+                logging.info('request json: %s' % data_str)
             elif request.content_type.startswith(
                     'application/x-www-form-urlencoded'):
                 request.__data__ = await request.post()

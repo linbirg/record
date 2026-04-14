@@ -336,7 +336,16 @@ class RequestHandler(object):
                 if not name in kw:
                     raise BadRequestError("Missing argument: %s" % name)
 
-        logger.LOG_INFO("call with args: %s" % str(kw))
+        def _truncate_args(kw):
+            result = {}
+            for k, v in kw.items():
+                if isinstance(v, str) and len(v) > 1000:
+                    result[k] = v[:1000] + '...[truncated]'
+                else:
+                    result[k] = v
+            return result
+
+        logger.LOG_INFO("call with args: %s" % str(_truncate_args(kw)))
 
         return kw
 
