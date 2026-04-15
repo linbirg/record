@@ -69,6 +69,17 @@
         <p v-if="searchQuery">未找到匹配的车辆</p>
         <p v-else>暂无车辆数据</p>
       </div>
+
+      <!-- 新增按钮 -->
+      <div class="car-card add-card" @click="showAddDialog">
+        <div class="add-card-content">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <line x1="12" y1="5" x2="12" y2="19"/>
+            <line x1="5" y1="12" x2="19" y2="12"/>
+          </svg>
+          <span>新增车辆</span>
+        </div>
+      </div>
     </div>
 
     <!-- 证件弹窗 -->
@@ -601,6 +612,45 @@ export default {
   padding: 48px 0;
   color: #9ca3af;
   font-size: 14px;
+}
+
+// 新增卡片
+.add-card {
+  background: #f9fafb;
+  border: 2px dashed #d1d5db;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: all 0.2s;
+
+  &:hover {
+    border-color: #3b82f6;
+    background: #eff6ff;
+    
+    .add-card-content {
+      color: #3b82f6;
+    }
+  }
+
+  .add-card-content {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 8px;
+    color: #9ca3af;
+    transition: color 0.2s;
+
+    svg {
+      width: 32px;
+      height: 32px;
+    }
+
+    span {
+      font-size: 14px;
+      font-weight: 500;
+    }
+  }
 }
 
 // 证件弹窗

@@ -199,7 +199,7 @@ export default {
     ocrResults: {
       immediate: true,
       handler(results) {
-        if (results.driving) {
+        if (results && results.driving) {
           const d = results.driving;
           if (d.carNo) this.form.carNo = d.carNo;
           if (d.brand) this.form.brand = d.brand;
@@ -207,7 +207,7 @@ export default {
           if (d.regDate) this.form.regDate = d.regDate;
           if (d.name) this.form.name = d.name;
         }
-        if (!this.form.name && results.driver && results.driver.name) {
+        if (results && results.driver && results.driver.name && !this.form.name) {
           this.form.name = results.driver.name;
         }
       }

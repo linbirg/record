@@ -15,7 +15,8 @@ from www.handlers.vo.vo_car_info import VoCarInfo
 from www.dao.car_info import CarInfo
 from www.dao.car_pics import CarPics
 
-from conf.dev import PIC_DIR, PIC_URL, OPENAI_API_KEY
+from conf.dev import PIC_DIR, PIC_URL
+from lib.ocr import create_ocr_engine
 
 
 def decode_base64_image(img_str):
@@ -249,65 +250,44 @@ async def delete(no):
     return Message("ok!")
 
 
-VLM_API_HOST = "https://api.minimaxi.com"
-
-
-async def call_vision(image_base64: str, prompt: str) -> str:
-    # 如果已经有 data:image 前缀就直接使用，否则添加
-    if image_base64.startswith('data:'):
-        image_url = image_base64
-    else:
-        image_url = f"data:image/jpeg;base64,{image_base64}"
-    
-    try:
-        async with aiohttp.ClientSession() as session:
-            async with session.post(
-                f"{VLM_API_HOST}/v1/coding_plan/vlm",
-                headers={
-                    "Authorization": f"Bearer {OPENAI_API_KEY}",
-                    "Content-Type": "application/json",
-                    "MM-API-Source": "Minimax-MCP"
-                },
-                json={
-                    "prompt": prompt,
-                    "image_url": image_url
-                },
-                timeout=aiohttp.ClientTimeout(total=60)
-            ) as resp:
-                data = await resp.json()
-                if data.get("base_resp", {}).get("status_code") != 0:
-                    logger.LOG_WARNING(f"VLM API error: {data.get('base_resp')}")
-                    raise web.HTTPInternalServerError(text=data.get("base_resp", {}).get("status_msg", "VLM API error"))
-                return data.get("content", "")
-    except web.HTTPInternalServerError:
-        raise
-    except Exception as e:
-        logger.LOG_WARNING(f"VLM API call failed: {e}")
-        raise web.HTTPInternalServerError(text=f"VLM API call failed: {str(e)}")
-
-
 @post("/car/ocr")
 @ResponseBody
-async def ocr(image: str, type: str):
-    prompts = {
-        "driving": "从行驶证图片中提取：姓名、车牌号、车辆品牌、型号、注册日期。只返回JSON格式：{\"name\":\"\",\"carNo\":\"\",\"brand\":\"\",\"model\":\"\",\"regDate\":\"\"}",
-        "driver": "从驾驶证图片中提取：姓名。只返回JSON格式：{\"name\":\"\"}"
-    }
+async def ocr(image: str, type: str = None, engine: str = None):
+    logger.LOG_INFO("OCR request: type=%s, engine=%s, image_length=%d", type, engine, len(image) if image else 0)
     
-    if type not in prompts:
-        raise web.HTTPBadRequest(text="Invalid type")
+    if not type:
+        logger.LOG_WARNING("OCR error: missing type parameter")
+        raise web.HTTPBadRequest(text="Missing type parameter")
+    
+    if type not in ("driving", "driver"):
+        logger.LOG_WARNING("OCR error: invalid type=%s", type)
+        raise web.HTTPBadRequest(text="Invalid type: " + str(type) + ", must be 'driving' or 'driver'")
+    
+    if engine and engine not in ("paddleocr", "minimax"):
+        logger.LOG_WARNING("OCR error: invalid engine=%s", engine)
+        raise web.HTTPBadRequest(text="Invalid engine: " + str(engine) + ", must be 'paddleocr' or 'minimax'")
     
     if not image:
+        logger.LOG_WARNING("OCR error: missing image parameter")
         raise web.HTTPBadRequest(text="Image is required")
     
-    content = await call_vision(image, prompts[type])
-    
-    if not content:
-        raise web.HTTPInternalServerError(text="Empty response from VLM API")
-    
-    json_str = re.sub(r'```json\n?|```\n?', '', content).strip()
     try:
-        return json.loads(json_str)
-    except json.JSONDecodeError as e:
-        logger.LOG_WARNING(f"JSON parse error: {e}, content: {content}")
-        raise web.HTTPInternalServerError(text=f"JSON parse error: {str(e)}")
+        ocr_engine = create_ocr_engine(engine)
+        engine_name = ocr_engine.__class__.__name__
+        logger.LOG_INFO("Using OCR engine: %s", engine_name)
+        
+        if type == "driving":
+            result = await ocr_engine.recognize_driving_license(image)
+        else:
+            result = await ocr_engine.recognize_driver_license(image)
+        
+        logger.LOG_INFO("OCR result: %s", str(result))
+        return result
+    except ValueError as e:
+        logger.LOG_WARNING("OCR ValueError: %s", str(e))
+        raise web.HTTPBadRequest(text=str(e))
+    except Exception as e:
+        import traceback
+        error_msg = traceback.format_exc()
+        logger.LOG_WARNING("OCR failed: %s\n%s", str(e), error_msg)
+        raise web.HTTPInternalServerError(text="OCR failed: " + str(e))

@@ -10,6 +10,11 @@ OPENAI_BASE_URL = 'https://api.minimax.chat/v1'
 OPENAI_MODEL = 'MiniMax-M2.7'
 OPENAI_MAX_HISTORY = 20
 
+# === OCR 引擎配置 ===
+# 可选值: "paddleocr" (本地，无API费用), "minimax" (API云端，需Key)
+OCR_ENGINE = "paddleocr"
+PADDLEOCR_USE_GPU = False
+
 # === AI Chat 上下文管理配置 ===
 
 # 聊天会话目录

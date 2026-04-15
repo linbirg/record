@@ -29,11 +29,19 @@
     <div class="step-actions">
       <button 
         class="btn btn-primary" 
-        :disabled="!canOcr || isOcrLoading"
-        @click="handleOcr"
+        :disabled="!canOcr || paddleOcrLoading || minimaxLoading"
+        @click="handleOcr('paddleocr')"
       >
-        <span v-if="isOcrLoading" class="loading-spinner"></span>
-        <span v-else>识别行驶证</span>
+        <span v-if="paddleOcrLoading" class="loading-spinner white"></span>
+        <span v-else>识别行驶证（OCR）</span>
+      </button>
+      <button 
+        class="btn btn-outline"
+        :disabled="!canOcr || paddleOcrLoading || minimaxLoading"
+        @click="handleOcr('minimax')"
+      >
+        <span v-if="minimaxLoading" class="loading-spinner blue"></span>
+        <span v-else>大模型识别</span>
       </button>
       <button 
         class="btn btn-secondary"
@@ -43,6 +51,42 @@
         下一步
         <span class="arrow">→</span>
       </button>
+    </div>
+
+    <div v-if="ocrResults.driving || ocrResults.driver" class="ocr-results">
+      <div class="results-title">识别结果</div>
+      <div class="results-grid">
+        <div v-if="ocrResults.driving" class="result-item">
+          <span class="result-label">车牌号：</span>
+          <span class="result-value" :class="{ empty: !ocrResults.driving.carNo }">
+            {{ ocrResults.driving.carNo || '未识别' }}
+          </span>
+        </div>
+        <div v-if="getDisplayName" class="result-item">
+          <span class="result-label">姓名：</span>
+          <span class="result-value" :class="{ empty: !getDisplayName }">
+            {{ getDisplayName }}
+          </span>
+        </div>
+        <div v-if="ocrResults.driving" class="result-item">
+          <span class="result-label">品牌：</span>
+          <span class="result-value" :class="{ empty: !ocrResults.driving.brand }">
+            {{ ocrResults.driving.brand || '未识别' }}
+          </span>
+        </div>
+        <div v-if="ocrResults.driving" class="result-item">
+          <span class="result-label">型号：</span>
+          <span class="result-value" :class="{ empty: !ocrResults.driving.model }">
+            {{ ocrResults.driving.model || '未识别' }}
+          </span>
+        </div>
+        <div v-if="ocrResults.driving" class="result-item">
+          <span class="result-label">注册日期：</span>
+          <span class="result-value" :class="{ empty: !ocrResults.driving.regDate }">
+            {{ ocrResults.driving.regDate || '未识别' }}
+          </span>
+        </div>
+      </div>
     </div>
   </div>
 </template>
@@ -60,7 +104,8 @@ export default {
     return {
       drivingLicense: '',
       driverLicense: '',
-      isOcrLoading: false,
+      paddleOcrLoading: false,
+      minimaxLoading: false,
       ocrResults: {}
     };
   },
@@ -69,7 +114,16 @@ export default {
       return this.drivingLicense || this.driverLicense;
     },
     canOcr() {
-      return this.drivingLicense && !this.isOcrLoading;
+      return this.drivingLicense;
+    },
+    getDisplayName() {
+      if (this.ocrResults.driving && this.ocrResults.driving.name) {
+        return this.ocrResults.driving.name;
+      }
+      if (this.ocrResults.driver && this.ocrResults.driver.name) {
+        return this.ocrResults.driver.name;
+      }
+      return '';
     }
   },
   methods: {
@@ -80,19 +134,21 @@ export default {
     onDriverLicenseChange(data) {
       this.driverLicense = data ? data.base64 : '';
     },
-    async handleOcr() {
+    async handleOcr(engine = 'paddleocr') {
       if (!this.canOcr) return;
       
-      this.isOcrLoading = true;
+      if (engine === 'paddleocr') {
+        this.paddleOcrLoading = true;
+      } else {
+        this.minimaxLoading = true;
+      }
       
       try {
-        // 识别行驶证
-        const drivingResult = await this.ocrImage(this.drivingLicense, 'driving');
+        const drivingResult = await this.ocrImage(this.drivingLicense, 'driving', engine);
         
-        // 如果有驾驶证也识别
         let driverResult = null;
         if (this.driverLicense) {
-          driverResult = await this.ocrImage(this.driverLicense, 'driver');
+          driverResult = await this.ocrImage(this.driverLicense, 'driver', engine);
         }
         
         this.ocrResults = {
@@ -106,34 +162,16 @@ export default {
         console.error('OCR error:', error);
         this.$message.error('识别失败，请稍后重试');
       } finally {
-        this.isOcrLoading = false;
+        this.paddleOcrLoading = false;
+        this.minimaxLoading = false;
       }
     },
-    async ocrImage(base64, type) {
+    async ocrImage(base64, type, engine = 'paddleocr') {
       const response = await this.post({
         url: 'car/ocr',
-        data: { image: base64, type }
+        data: { image: base64, type, engine }
       });
       return response;
-    },
-    parseTextResult(text, type) {
-      // 简单文本解析作为后备
-      const result = {};
-      
-      if (type === 'driving') {
-        const carNoMatch = text.match(/车牌[号号码]?\s*[:：]?\s*([\u4e00-\u9fa5A-Z0-9]+)/i);
-        const brandMatch = text.match(/品牌\s*[:：]?\s*([\u4e00-\u9fa5A-Za-z]+)/i);
-        const modelMatch = text.match(/型号\s*[:：]?\s*([\u4e00-\u9fa5A-Za-z0-9]+)/i);
-        
-        if (carNoMatch) result.carNo = carNoMatch[1];
-        if (brandMatch) result.brand = brandMatch[1];
-        if (modelMatch) result.model = modelMatch[1];
-      } else {
-        const nameMatch = text.match(/姓名\s*[:：]?\s*([\u4e00-\u9fa5]{2,4})/i);
-        if (nameMatch) result.name = nameMatch[1];
-      }
-      
-      return result;
     },
     handleNext() {
       this.$emit('next', {
@@ -230,13 +268,32 @@ export default {
   }
 }
 
+.btn-outline {
+  background: #ffffff;
+  color: #146ef5;
+  border: 1px solid #146ef5;
+
+  &:hover:not(:disabled) {
+    background: #146ef5;
+    color: #ffffff;
+  }
+}
+
 .loading-spinner {
   width: 16px;
   height: 16px;
-  border: 2px solid #ffffff;
-  border-top-color: transparent;
   border-radius: 50%;
   animation: spin 0.8s linear infinite;
+  
+  &.white {
+    border: 2px solid #ffffff;
+    border-top-color: transparent;
+  }
+  
+  &.blue {
+    border: 2px solid #146ef5;
+    border-top-color: transparent;
+  }
 }
 
 @keyframes spin {
@@ -245,8 +302,53 @@ export default {
   }
 }
 
+.ocr-results {
+  margin-top: 24px;
+  padding: 16px;
+  background: #f0fdf4;
+  border: 1px solid #86efac;
+  border-radius: 8px;
+}
+
+.results-title {
+  font-size: 14px;
+  font-weight: 600;
+  color: #166534;
+  margin-bottom: 12px;
+}
+
+.results-grid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 8px 24px;
+}
+
+.result-item {
+  display: flex;
+  align-items: center;
+  font-size: 14px;
+}
+
+.result-label {
+  color: #374151;
+  font-weight: 500;
+}
+
+.result-value {
+  color: #166534;
+  
+  &.empty {
+    color: #9ca3af;
+    font-style: italic;
+  }
+}
+
 @media (max-width: 768px) {
   .uploaders {
+    grid-template-columns: 1fr;
+  }
+  
+  .results-grid {
     grid-template-columns: 1fr;
   }
 }
