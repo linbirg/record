@@ -178,9 +178,15 @@
               :alt="img.name"
               @click="previewImage(img.url)" />
             <div
-              class="doc-image-overlay"
-              @click.stop="confirmDelete(img)">
-              <i class="el-icon-delete2"></i>
+              class="doc-image-delete"
+              @click.stop="confirmDelete(img)"
+              title="删除证件">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <polyline points="3,6 5,6 21,6"/>
+                <path d="M19,6v14a2,2,0,0,1-2,2H7a2,2,0,0,1-2-2V6M8,6V4a2,2,0,0,1,2-2h4a2,2,0,0,1,2,2V6"/>
+                <line x1="10" y1="11" x2="10" y2="17"/>
+                <line x1="14" y1="11" x2="14" y2="17"/>
+              </svg>
             </div>
           </div>
         </div>
@@ -962,34 +968,45 @@
           transform: scale(1.05);
         }
 
-        .doc-image-overlay {
+        .doc-image-delete {
           opacity: 1;
+          transform: translate(0, 0);
         }
       }
     }
 
-    .doc-image-overlay {
+    .doc-image-delete {
       position: absolute;
-      top: 8px;
-      right: 8px;
-      width: 32px;
-      height: 32px;
-      background: rgba(238, 29, 54, 0.9);
-      border-radius: 4px;
+      top: 12px;
+      right: 12px;
+      width: 36px;
+      height: 36px;
+      background: #ee1d36;
+      border-radius: 50%;
       display: flex;
       align-items: center;
       justify-content: center;
       cursor: pointer;
       opacity: 0;
+      transform: translate(6px, -6px);
       transition: opacity 0.2s, transform 0.2s;
+      box-shadow:
+        0px 84px 24px rgba(0,0,0,0),
+        0px 54px 22px rgba(0,0,0,0.01),
+        0px 30px 18px rgba(0,0,0,0.04),
+        0px 13px 13px rgba(0,0,0,0.08),
+        0px 3px 7px rgba(0,0,0,0.09);
 
-      i {
+      svg {
+        width: 16px;
+        height: 16px;
         color: white;
-        font-size: 16px;
+        stroke-width: 2;
       }
 
       &:hover {
-        transform: scale(1.1);
+        transform: translate(6px, -6px) scale(1.1);
+        background: #d01830;
       }
     }
 
