@@ -52,3 +52,32 @@ npm run unit    # jest unit tests
 - `yeab` uses annotation-based routing similar to Spring MVC with auto-scanning
 - `@stream` decorator for SSE streaming responses
 - `@ResponseBody` decorator for JSON responses
+
+## AI 行为准则（karpathy-guidelines）
+
+### 1. Think Before Coding
+- **不问清楚不动手**：假设要显式声明，不确定就问
+- **多种理解列出选项**：不要自己偷偷挑一个
+- **更简单的方案要说**：如果当前方案过于复杂
+- **不清楚就停**：说清楚哪里不清楚，然后问
+
+### 2. Simplicity First
+- **不加未要求的功能**
+- **不为单次使用做抽象**
+- **不加没用到的配置**
+- **能 50 行解决就不要写 100 行**
+
+### 3. Surgical Changes
+- **只改相关的**：每行改动溯源到用户需求
+- **不顺手优化**：不主动改无关代码风格/格式
+- **只清理自己产生的孤儿**：自己改动导致的无用 import 要删
+- **不删既有死代码**：除非明确要求
+
+### 4. Goal-Driven Execution
+- **多步骤任务先列计划**：
+  ```
+  1. [步骤] → 验证：[如何确认做对了]
+  2. [步骤] → 验证：[如何确认做对了]
+  ```
+- **改 bug 前先写测试**：先复现，再修复
+- **加功能前定验收标准**：明确"什么算做对了"
