@@ -180,7 +180,7 @@
             <div
               class="doc-image-overlay"
               @click.stop="confirmDelete(img)">
-              <i class="el-icon-delete"></i>
+              <span class="delete-icon">⚡</span>
             </div>
           </div>
         </div>
@@ -381,7 +381,7 @@
         isAdd: true,
         currentCar: null,
         docImages: [],
-        docName: "证件01",
+        docName: "关系证明",
         customDocName: "",
         deleteConfirmVisible: false,
         deleteTargetFile: null,
@@ -974,7 +974,7 @@
       right: 8px;
       width: 32px;
       height: 32px;
-      background: rgba(238, 29, 54, 0.9);
+      background: rgba(0, 215, 34, 0.9);
       border-radius: 4px;
       display: flex;
       align-items: center;
@@ -983,7 +983,7 @@
       opacity: 0;
       transition: opacity 0.2s, transform 0.2s;
 
-      i {
+      .delete-icon {
         color: white;
         font-size: 16px;
       }
@@ -1036,18 +1036,18 @@
   }
 
   // 删除确认弹窗
-.delete-confirm-popup {
-  position: fixed;
-  top: 0;
-  left: 0;
-  right: 0;
-  bottom: 0;
-  background: rgba(0, 0, 0, 0.5);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  z-index: 5000;
-}
+  .delete-confirm-popup {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: rgba(0, 0, 0, 0.5);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 5000;
+  }
 
   .delete-confirm-content {
     background: white;
