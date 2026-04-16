@@ -86,39 +86,43 @@
     <el-dialog
       :visible.sync="docDialogVisible"
       title="证件信息"
-      width="500px"
+      width="600px"
       :close-on-click-modal="true"
     >
       <div class="doc-content" v-if="currentCar">
-        <p class="doc-car-info">{{ currentCar.name }} - {{ currentCar.carNo }}</p>
+        <div class="doc-header">
+          <span class="doc-car-info">{{ currentCar.name }} - {{ currentCar.carNo }}</span>
+          <span class="doc-count" v-if="docImages.length > 0">{{ docImages.length }} 张证件</span>
+        </div>
+
         <div class="doc-images" v-if="docImages.length > 0">
           <div v-for="(img, index) in docImages" :key="index" class="doc-image-item">
             <img :src="img.url" :alt="img.name" @click="previewImage(img.url)"/>
+            <div class="doc-image-overlay" @click.stop="confirmDelete(img)">
+              <i class="el-icon-delete"></i>
+            </div>
           </div>
         </div>
+
         <div v-if="docImages.length === 0" class="doc-empty">
           <p>暂无证件图片</p>
         </div>
+
         <div class="doc-upload-section">
-          <div class="doc-upload-header" v-if="docImages.length > 0">
-            <el-button size="small" type="primary" @click="showUploadSection = !showUploadSection">
-              {{ showUploadSection ? '取消添加' : '添加证件' }}
-            </el-button>
+          <div class="doc-name-selector">
+            <span class="doc-name-label">证件名称：</span>
+            <el-select v-model="docName" placeholder="选择证件名称" style="width: 160px;">
+              <el-option v-for="opt in docOptions" :key="opt.value" :label="opt.label" :value="opt.value" />
+            </el-select>
+            <el-input
+              v-if="docName === 'custom'"
+              v-model="customDocName"
+              placeholder="自定义名称"
+              size="small"
+              style="width: 120px; margin-left: 8px;"
+            />
           </div>
-          <div class="doc-upload-body" v-if="showUploadSection || docImages.length === 0">
-            <div class="doc-name-selector">
-              <span class="doc-name-label">证件名称：</span>
-              <el-select v-model="docName" placeholder="选择证件名称" style="width: 180px;">
-                <el-option v-for="opt in docOptions" :key="opt.value" :label="opt.label" :value="opt.value" />
-              </el-select>
-              <el-input
-                v-if="docName === 'custom'"
-                v-model="customDocName"
-                placeholder="输入自定义名称"
-                size="small"
-                style="width: 120px; margin-left: 8px;"
-              />
-            </div>
+          <div class="doc-upload-actions">
             <el-upload
               class="doc-uploader"
               action="#"
@@ -127,12 +131,28 @@
               :show-file-list="false"
               accept="image/jpeg,image/png,image/jpg"
             >
-              <el-button size="small" type="primary">选择文件</el-button>
+              <el-button type="primary">选择文件</el-button>
             </el-upload>
+            <el-button @click="docDialogVisible = false">取消</el-button>
           </div>
         </div>
       </div>
     </el-dialog>
+
+    <!-- 删除确认弹窗 -->
+    <div v-if="deleteConfirmVisible" class="delete-confirm-popup" @click.self="deleteConfirmVisible = false">
+      <div class="delete-confirm-content">
+        <div class="delete-confirm-icon">
+          <i class="el-icon-warning"></i>
+        </div>
+        <p class="delete-confirm-title">确定删除证件？</p>
+        <p class="delete-filename">{{ deleteTargetFile && deleteTargetFile.name }}</p>
+        <div class="delete-confirm-btns">
+          <el-button @click="deleteConfirmVisible = false">取消</el-button>
+          <el-button type="danger" @click="handleDeleteDoc">确认删除</el-button>
+        </div>
+      </div>
+    </div>
 
     <!-- 图片预览 -->
     <el-dialog :visible.sync="previewVisible" width="60%" :close-on-click-modal="true">
@@ -227,7 +247,8 @@ export default {
       docImages: [],
       docName: "证件01",
       customDocName: "",
-      showUploadSection: false,
+      deleteConfirmVisible: false,
+      deleteTargetFile: null,
       docOptions: [
         { label: "证件01", value: "证件01" },
         { label: "证件02", value: "证件02" },
@@ -373,6 +394,28 @@ export default {
         })
         .catch(() => {
           this.$message.error("上传失败");
+        });
+    },
+
+    confirmDelete(img) {
+      this.deleteTargetFile = img;
+      this.deleteConfirmVisible = true;
+    },
+
+    handleDeleteDoc() {
+      if (!this.deleteTargetFile) return;
+      this.post({
+        url: "car/pic/delete",
+        data: { no: this.currentCar.no, filename: this.deleteTargetFile.name },
+      })
+        .then(() => {
+          this.$message.success("删除成功");
+          this.deleteConfirmVisible = false;
+          this.deleteTargetFile = null;
+          this.loadDocImages(this.currentCar.no);
+        })
+        .catch(() => {
+          this.$message.error("删除失败");
         });
     },
 
@@ -732,26 +775,45 @@ export default {
 
 // 证件弹窗
 .doc-content {
+  .doc-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 16px;
+    padding-bottom: 12px;
+    border-bottom: 1px solid #d8d8d8;
+  }
+
   .doc-car-info {
     font-size: 16px;
-    font-weight: 500;
-    color: #1a1a1a;
-    margin: 0 0 16px 0;
-    padding-bottom: 12px;
-    border-bottom: 1px solid #e5e7eb;
+    font-weight: 600;
+    color: #080808;
+  }
+
+  .doc-count {
+    font-size: 14px;
+    color: #5a5a5a;
   }
 
   .doc-images {
     display: grid;
     grid-template-columns: repeat(2, 1fr);
-    gap: 12px;
+    gap: 16px;
   }
 
   .doc-image-item {
+    position: relative;
     aspect-ratio: 4/3;
     overflow: hidden;
-    border-radius: 8px;
-    border: 1px solid #e5e7eb;
+    border-radius: 4px;
+    border: 1px solid #d8d8d8;
+    box-shadow:
+      0px 84px 24px rgba(0,0,0,0),
+      0px 54px 22px rgba(0,0,0,0.01),
+      0px 30px 18px rgba(0,0,0,0.04),
+      0px 13px 13px rgba(0,0,0,0.08),
+      0px 3px 7px rgba(0,0,0,0.09);
+    transition: transform 0.2s;
 
     img {
       width: 100%;
@@ -759,53 +821,173 @@ export default {
       object-fit: cover;
       cursor: pointer;
       transition: transform 0.2s;
+    }
 
-      &:hover {
+    &:hover {
+      transform: translateY(-2px);
+
+      img {
         transform: scale(1.05);
       }
+
+      .doc-image-overlay {
+        opacity: 1;
+      }
+    }
+  }
+
+  .doc-image-overlay {
+    position: absolute;
+    top: 8px;
+    right: 8px;
+    width: 32px;
+    height: 32px;
+    background: rgba(238, 29, 54, 0.9);
+    border-radius: 4px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    opacity: 0;
+    transition: opacity 0.2s, transform 0.2s;
+
+    i {
+      color: white;
+      font-size: 16px;
+    }
+
+    &:hover {
+      transform: scale(1.1);
     }
   }
 
   .doc-empty {
     text-align: center;
-    padding: 24px 0;
-    color: #9ca3af;
+    padding: 32px 0;
+    color: #ababab;
 
     p {
-      margin: 0 0 12px 0;
+      margin: 0 0 16px 0;
+      font-size: 14px;
     }
   }
 
   .doc-upload-section {
-    margin-top: 16px;
+    margin-top: 20px;
     padding-top: 16px;
-    border-top: 1px solid #e5e7eb;
-  }
-
-  .doc-upload-header {
-    margin-bottom: 12px;
-  }
-
-  .doc-upload-body {
-    display: flex;
-    flex-direction: column;
-    gap: 12px;
+    border-top: 1px solid #d8d8d8;
   }
 
   .doc-name-selector {
     display: flex;
     align-items: center;
     flex-wrap: wrap;
-    gap: 8px;
+    gap: 12px;
+    margin-bottom: 16px;
 
     .doc-name-label {
       font-size: 14px;
-      color: #374151;
+      font-weight: 500;
+      color: #080808;
     }
+  }
+
+  .doc-upload-actions {
+    display: flex;
+    gap: 12px;
+    align-items: center;
   }
 
   .doc-uploader {
     display: inline-block;
+  }
+}
+
+// 删除确认弹窗
+.delete-confirm-popup {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(0, 0, 0, 0.5);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 2000;
+}
+
+.delete-confirm-content {
+  background: white;
+  padding: 32px;
+  border-radius: 4px;
+  min-width: 300px;
+  text-align: center;
+  box-shadow:
+    0px 84px 24px rgba(0,0,0,0),
+    0px 54px 22px rgba(0,0,0,0.01),
+    0px 30px 18px rgba(0,0,0,0.04),
+    0px 13px 13px rgba(0,0,0,0.08),
+    0px 3px 7px rgba(0,0,0,0.09);
+
+  .delete-confirm-icon {
+    margin-bottom: 16px;
+
+    i {
+      font-size: 48px;
+      color: #ee1d36;
+    }
+  }
+
+  .delete-confirm-title {
+    font-size: 16px;
+    font-weight: 600;
+    color: #080808;
+    margin: 0 0 8px 0;
+  }
+
+  .delete-filename {
+    font-size: 12px;
+    color: #5a5a5a;
+    margin: 0 0 20px 0;
+    word-break: break-all;
+  }
+
+  .delete-confirm-btns {
+    display: flex;
+    gap: 12px;
+    justify-content: center;
+  }
+}
+
+// 按钮样式（基于webflow规范）
+.el-button {
+  border-radius: 4px;
+  font-weight: 500;
+  transition: transform 0.2s;
+
+  &:hover {
+    transform: translate(6px);
+  }
+}
+
+.el-button--primary {
+  background: #146ef5;
+  border-color: #146ef5;
+
+  &:hover {
+    background: #0055d4;
+    border-color: #0055d4;
+  }
+}
+
+.el-button--danger {
+  background: #ee1d36;
+  border-color: #ee1d36;
+
+  &:hover {
+    background: #d01830;
+    border-color: #d01830;
   }
 }
 
