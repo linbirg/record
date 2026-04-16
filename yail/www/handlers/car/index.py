@@ -174,15 +174,17 @@ async def update(carInfo):
 
 
 @post("/car/pic/upload")
-@RequestBody("formData", kls=VoCarInfo)
-async def upload(formData):
-    logger.LOG_INFO("test! formData=%s", formData)
-    name = formData.filename if formData.filename else formData.file.filename
+@RequestBody("request")
+async def upload(request):
+    logger.LOG_INFO("upload called")
+    post_data = await request.post()
+    name = post_data.get("filename") or post_data["file"].filename
+    no = post_data.get("no")
     fullpath = "/".join([PIC_DIR, name])
     with open(fullpath, "wb") as f:
-        data = formData.file.file.read()
+        data = post_data["file"].file.read()
         f.write(data)
-        car = await CarInfo.find_one(no=formData.no)
+        car = await CarInfo.find_one(no=no)
 
         if car is None:
             raise aiohttp.HTTPError(500, "CarInfo not found")
