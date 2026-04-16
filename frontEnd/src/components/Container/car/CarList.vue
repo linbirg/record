@@ -180,7 +180,7 @@
             <div
               class="doc-image-overlay"
               @click.stop="confirmDelete(img)">
-              <span class="delete-icon">⚡</span>
+              <i class="el-icon-delete2"></i>
             </div>
           </div>
         </div>
@@ -974,7 +974,7 @@
       right: 8px;
       width: 32px;
       height: 32px;
-      background: rgba(0, 215, 34, 0.9);
+      background: rgba(238, 29, 54, 0.9);
       border-radius: 4px;
       display: flex;
       align-items: center;
@@ -983,7 +983,7 @@
       opacity: 0;
       transition: opacity 0.2s, transform 0.2s;
 
-      .delete-icon {
+      i {
         color: white;
         font-size: 16px;
       }
