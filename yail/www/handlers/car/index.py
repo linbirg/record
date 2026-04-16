@@ -174,7 +174,6 @@ async def update(carInfo):
 
 
 @post("/car/pic/upload")
-@RequestBody("request")
 async def upload(request):
     logger.LOG_INFO("upload called")
     post_data = await request.post()
