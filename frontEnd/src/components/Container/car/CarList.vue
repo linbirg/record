@@ -86,7 +86,7 @@
     <el-dialog
       :visible.sync="docDialogVisible"
       title="证件信息"
-      width="400px"
+      width="500px"
       :close-on-click-modal="true"
     >
       <div class="doc-content" v-if="currentCar">
@@ -96,9 +96,40 @@
             <img :src="img.url" :alt="img.name" @click="previewImage(img.url)"/>
           </div>
         </div>
-        <div v-else class="doc-empty">
+        <div v-if="docImages.length === 0" class="doc-empty">
           <p>暂无证件图片</p>
-          <el-button size="small" @click="goToDetail">上传证件</el-button>
+        </div>
+        <div class="doc-upload-section">
+          <div class="doc-upload-header" v-if="docImages.length > 0">
+            <el-button size="small" type="primary" @click="showUploadSection = !showUploadSection">
+              {{ showUploadSection ? '取消添加' : '添加证件' }}
+            </el-button>
+          </div>
+          <div class="doc-upload-body" v-if="showUploadSection || docImages.length === 0">
+            <div class="doc-name-selector">
+              <span class="doc-name-label">证件名称：</span>
+              <el-select v-model="docName" placeholder="选择证件名称" style="width: 180px;">
+                <el-option v-for="opt in docOptions" :key="opt.value" :label="opt.label" :value="opt.value" />
+              </el-select>
+              <el-input
+                v-if="docName === 'custom'"
+                v-model="customDocName"
+                placeholder="输入自定义名称"
+                size="small"
+                style="width: 120px; margin-left: 8px;"
+              />
+            </div>
+            <el-upload
+              class="doc-uploader"
+              action="#"
+              :auto-upload="true"
+              :http-request="handleUploadFile"
+              :show-file-list="false"
+              accept="image/jpeg,image/png,image/jpg"
+            >
+              <el-button size="small" type="primary">选择文件</el-button>
+            </el-upload>
+          </div>
         </div>
       </div>
     </el-dialog>
@@ -194,6 +225,19 @@ export default {
       isAdd: true,
       currentCar: null,
       docImages: [],
+      docName: "证件01",
+      customDocName: "",
+      showUploadSection: false,
+      docOptions: [
+        { label: "证件01", value: "证件01" },
+        { label: "证件02", value: "证件02" },
+        { label: "证件03", value: "证件03" },
+        { label: "证件04", value: "证件04" },
+        { label: "证件05", value: "证件05" },
+        { label: "行驶证", value: "行驶证" },
+        { label: "驾驶证", value: "驾驶证" },
+        { label: "关系证明", value: "关系证明" },
+      ],
       carForm: {
         no: -1,
         name: "",
@@ -296,6 +340,39 @@ export default {
         })
         .catch(() => {
           this.docImages = [];
+        });
+    },
+
+    getDateString() {
+      const now = new Date();
+      const year = now.getFullYear();
+      const month = String(now.getMonth() + 1).padStart(2, "0");
+      const day = String(now.getDate()).padStart(2, "0");
+      return `${year}${month}${day}`;
+    },
+
+    generateFileName() {
+      const docName = this.docName === "custom" ? this.customDocName : this.docName;
+      return `${this.currentCar.name}_${this.getDateString()}_${docName}.jpg`;
+    },
+
+    handleUploadFile(item) {
+      const file = item.file;
+      const fileName = this.generateFileName();
+      const formData = new FormData();
+      formData.append("file", file);
+      formData.append("no", this.currentCar.no);
+      formData.append("filename", fileName);
+
+      this.post({ url: "car/pic/upload", data: formData })
+        .then(() => {
+          this.$message.success("上传成功");
+          this.docName = "证件01";
+          this.customDocName = "";
+          this.loadDocImages(this.currentCar.no);
+        })
+        .catch(() => {
+          this.$message.error("上传失败");
         });
     },
 
@@ -697,6 +774,38 @@ export default {
     p {
       margin: 0 0 12px 0;
     }
+  }
+
+  .doc-upload-section {
+    margin-top: 16px;
+    padding-top: 16px;
+    border-top: 1px solid #e5e7eb;
+  }
+
+  .doc-upload-header {
+    margin-bottom: 12px;
+  }
+
+  .doc-upload-body {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+  }
+
+  .doc-name-selector {
+    display: flex;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 8px;
+
+    .doc-name-label {
+      font-size: 14px;
+      color: #374151;
+    }
+  }
+
+  .doc-uploader {
+    display: inline-block;
   }
 }
 

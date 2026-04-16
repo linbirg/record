@@ -177,7 +177,7 @@ async def update(carInfo):
 @RequestBody("formData", kls=VoCarInfo)
 async def upload(formData):
     logger.LOG_INFO("test! formData=%s", formData)
-    name = formData.file.filename
+    name = formData.filename if formData.filename else formData.file.filename
     fullpath = "/".join([PIC_DIR, name])
     with open(fullpath, "wb") as f:
         data = formData.file.file.read()
