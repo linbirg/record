@@ -66,7 +66,7 @@
               <span
                 v-if="isElectricCar(car)"
                 class="ev-icon"
-                >⚡</span
+                >🔋</span
               >
             </p>
             <p class="dept-name">{{ car.dept }}</p>
@@ -181,11 +181,23 @@
               class="doc-image-delete"
               @click.stop="confirmDelete(img)"
               title="删除证件">
-              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                <polyline points="3,6 5,6 21,6"/>
-                <path d="M19,6v14a2,2,0,0,1-2,2H7a2,2,0,0,1-2-2V6M8,6V4a2,2,0,0,1,2-2h4a2,2,0,0,1,2,2V6"/>
-                <line x1="10" y1="11" x2="10" y2="17"/>
-                <line x1="14" y1="11" x2="14" y2="17"/>
+              <svg
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                stroke-width="2">
+                <polyline points="3,6 5,6 21,6" />
+                <path d="M19,6v14a2,2,0,0,1-2,2H7a2,2,0,0,1-2-2V6M8,6V4a2,2,0,0,1,2-2h4a2,2,0,0,1,2,2V6" />
+                <line
+                  x1="10"
+                  y1="11"
+                  x2="10"
+                  y2="17" />
+                <line
+                  x1="14"
+                  y1="11"
+                  x2="14"
+                  y2="17" />
               </svg>
             </div>
           </div>
@@ -990,12 +1002,8 @@
       opacity: 0;
       transform: translate(6px, -6px);
       transition: opacity 0.2s, transform 0.2s;
-      box-shadow:
-        0px 84px 24px rgba(0,0,0,0),
-        0px 54px 22px rgba(0,0,0,0.01),
-        0px 30px 18px rgba(0,0,0,0.04),
-        0px 13px 13px rgba(0,0,0,0.08),
-        0px 3px 7px rgba(0,0,0,0.09);
+      box-shadow: 0px 84px 24px rgba(0, 0, 0, 0), 0px 54px 22px rgba(0, 0, 0, 0.01), 0px 30px 18px rgba(0, 0, 0, 0.04),
+        0px 13px 13px rgba(0, 0, 0, 0.08), 0px 3px 7px rgba(0, 0, 0, 0.09);
 
       svg {
         width: 16px;
