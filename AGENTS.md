@@ -98,8 +98,9 @@ npm run unit    # jest unit tests
 ### 项目约定
 - 导入顺序：标准库 → 第三方 → 本地模块
 - 分层：handlers → services → models
-- 无重复代码，无魔法字符串/数字
+- 无重复代码（DRY），无魔法字符串/数字
 - 不做过度设计（YAGNI）
+- 保持简单直接（KISS）
 
 ### 类型提示
 - 必须指定返回值类型
