@@ -81,3 +81,26 @@ npm run unit    # jest unit tests
   ```
 - **改 bug 前先写测试**：先复现，再修复
 - **加功能前定验收标准**：明确"什么算做对了"
+
+## Python 编码准则
+
+### 命名规范
+- snake_case 命名，无缩写
+- 类名：PascalCase
+- 异常：以 AppError 为基类
+
+### 代码风格
+- 遵循 PEP 8
+- 函数不超过 30 行
+- 优先使用纯函数
+- EAFP 错误处理风格
+
+### 项目约定
+- 导入顺序：标准库 → 第三方 → 本地模块
+- 分层：handlers → services → models
+- 无重复代码，无魔法字符串/数字
+- 不做过度设计（YAGNI）
+
+### 类型提示
+- 必须指定返回值类型
+- Python 3.10+ 使用 `X | None` 而非 `Optional[X]`
