@@ -27,4 +27,3 @@ yail/lib/__pycache__/logger.cpython-310.pyc
 # Worktrees
 .worktrees/
 yail/app.db
-yail/app.db
