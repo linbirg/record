@@ -44,6 +44,7 @@
         <span>新增车辆</span>
       </button>
       <button
+        v-if="batchImportEnabled"
         class="add-btn"
         @click="openImportDialog">
         <svg
@@ -428,6 +429,7 @@
         customDocName: "",
         deleteConfirmVisible: false,
         deleteTargetFile: null,
+        batchImportEnabled: false,
         docOptions: [
           { label: "驾驶证", value: "驾驶证" },
           { label: "关系证明", value: "关系证明" },
@@ -481,6 +483,7 @@
     },
     mounted() {
       this.loadCars();
+      this.fetchConfig();
     },
     methods: {
       ...mapActions(["get", "post"]),
@@ -515,6 +518,20 @@
           .catch(() => {
             this.loading = false;
             this.$message.error("加载车辆列表失败");
+          });
+      },
+
+      fetchConfig() {
+        this.post({
+          url: "system/config",
+        })
+          .then((response) => {
+            if (response && response.enableBatchImport !== undefined) {
+              this.batchImportEnabled = response.enableBatchImport;
+            }
+          })
+          .catch(() => {
+            // 获取配置失败，默认不显示
           });
       },
 
