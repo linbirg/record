@@ -159,8 +159,18 @@ async def add(carInfo):
 @ResponseBody
 @RequestBody("carInfo", kls=VoCarInfo)
 async def update(carInfo):
+    from www.dao.car_history import CarNoHistory
+    
     logger.LOG_INFO("test! carInfo.name=%s", carInfo.name)
     car = await CarInfo.find_one(no=carInfo.no)
+    
+    if car.carNo != carInfo.carNo:
+        history = CarNoHistory()
+        history.car_id = car.no
+        history.old_car_no = car.carNo
+        history.new_car_no = carInfo.carNo
+        await history.save()
+    
     car.name = carInfo.name
     car.dept = carInfo.dept
     car.carNo = carInfo.carNo
@@ -239,6 +249,8 @@ async def delete(no):
     car = await CarInfo.find_one(no=no)
     if not car:
         return Message("ok!")
+    
+    await car.save_to_history()
     
     pics = await CarPics.find(carID=car.no)
     for p in pics:
@@ -359,3 +371,89 @@ async def import_word(request):
     except Exception as e:
         LOG_WARNING(f"[import_word] Exception: {str(e)}")
         return {"success": False, "message": f"导入失败: {str(e)}"}
+
+
+@post("/car/history")
+@ResponseBody
+async def get_history(request):
+    from www.dao.car_history import CarInfoHistory
+    
+    data = await request.post()
+    current_page = int(data.get("currentPage", 1))
+    page_size = int(data.get("pageSize", 20))
+    car_no = data.get("carNo", "")
+    start_date = data.get("startDate", "")
+    end_date = data.get("endDate", "")
+    
+    where = "1=1"
+    params = []
+    if car_no:
+        where += " AND carid LIKE ?"
+        params.append(f"%{car_no}%")
+    if start_date:
+        where += " AND deleted_at >= ?"
+        params.append(start_date)
+    if end_date:
+        where += " AND deleted_at <= ?"
+        params.append(end_date)
+    
+    count_sql = f"SELECT COUNT(*) FROM t_car_info_history WHERE {where}"
+    cursor = await CarInfoHistory.execute(count_sql, params)
+    total = cursor.fetchone()[0] if cursor else 0
+    
+    offset = (current_page - 1) * page_size
+    sql = f"SELECT * FROM t_car_info_history WHERE {where} ORDER BY deleted_at DESC LIMIT ? OFFSET ?"
+    params.extend([page_size, offset])
+    cursor = await CarInfoHistory.execute(sql, params)
+    records = cursor.fetchall() if cursor else []
+    
+    return {
+        "success": True,
+        "records": records,
+        "total": total,
+        "currentPage": current_page,
+        "pageSize": page_size
+    }
+
+
+@post("/car/car_no_history")
+@ResponseBody
+async def get_car_no_history(request):
+    from www.dao.car_history import CarNoHistory
+    
+    data = await request.post()
+    current_page = int(data.get("currentPage", 1))
+    page_size = int(data.get("pageSize", 20))
+    car_no = data.get("carNo", "")
+    start_date = data.get("startDate", "")
+    end_date = data.get("endDate", "")
+    
+    where = "1=1"
+    params = []
+    if car_no:
+        where += " AND (old_car_no LIKE ? OR new_car_no LIKE ?)"
+        params.extend([f"%{car_no}%", f"%{car_no}%"])
+    if start_date:
+        where += " AND changed_at >= ?"
+        params.append(start_date)
+    if end_date:
+        where += " AND changed_at <= ?"
+        params.append(end_date)
+    
+    count_sql = f"SELECT COUNT(*) FROM t_car_no_history WHERE {where}"
+    cursor = await CarNoHistory.execute(count_sql, params)
+    total = cursor.fetchone()[0] if cursor else 0
+    
+    offset = (current_page - 1) * page_size
+    sql = f"SELECT * FROM t_car_no_history WHERE {where} ORDER BY changed_at DESC LIMIT ? OFFSET ?"
+    params.extend([page_size, offset])
+    cursor = await CarNoHistory.execute(sql, params)
+    records = cursor.fetchall() if cursor else []
+    
+    return {
+        "success": True,
+        "records": records,
+        "total": total,
+        "currentPage": current_page,
+        "pageSize": page_size
+    }

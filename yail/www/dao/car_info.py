@@ -40,3 +40,18 @@ class CarInfo(AutoIdModel):
         car.abbr = abbr
         await car.save()
         return car
+
+    async def save_to_history(self):
+        """保存当前记录到历史表"""
+        from www.dao.car_history import CarInfoHistory
+
+        history = CarInfoHistory()
+        history.original_id = self.no
+        history.user_name = self.name
+        history.dept = self.dept
+        history.carid = self.carNo
+        history.brand = self.brand
+        history.car_license = self.carLicense
+        history.license = self.license
+        history.abbr = self.abbr
+        await history.save()

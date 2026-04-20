@@ -62,6 +62,22 @@
         </svg>
         <span>批量导入</span>
       </button>
+      <button
+        class="icon-btn"
+        @click="openHistoryDialog"
+        title="历史记录">
+        <svg
+          viewBox="0 0 24 24"
+          fill="none"
+          stroke="currentColor"
+          stroke-width="2">
+          <circle
+            cx="12"
+            cy="12"
+            r="10" />
+          <polyline points="12 6 12 12 16 14" />
+        </svg>
+      </button>
     </div>
 
     <!-- 车辆列表网格 -->
@@ -398,6 +414,9 @@
     <ImportWordDialog
       ref="importWordDialog"
       @imported="loadCars" />
+
+    <!-- 历史记录弹窗 -->
+    <CarHistory ref="carHistory" />
   </div>
 </template>
 
@@ -405,12 +424,14 @@
   import { mapActions } from "vuex";
   import CarRegistration from "./CarRegistration.vue";
   import ImportWordDialog from "./ImportWordDialog.vue";
+  import CarHistory from "./CarHistory.vue";
 
   export default {
     name: "CarList",
     components: {
       CarRegistration,
       ImportWordDialog,
+      CarHistory,
     },
     data() {
       return {
@@ -628,6 +649,10 @@
         this.$refs.importWordDialog.open();
       },
 
+      openHistoryDialog() {
+        this.$refs.carHistory.open();
+      },
+
       showAddDialog() {
         this.isAdd = true;
         this.carForm = {
@@ -780,6 +805,31 @@
     font-size: 14px;
     font-weight: 500;
     color: #374151;
+    cursor: pointer;
+    transition: all 0.2s;
+
+    svg {
+      width: 18px;
+      height: 18px;
+    }
+
+    &:hover {
+      border-color: #3b82f6;
+      color: #3b82f6;
+    }
+  }
+
+  .icon-btn {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 40px;
+    height: 40px;
+    padding: 0;
+    background: #ffffff;
+    border: 1px solid #e5e7eb;
+    border-radius: 8px;
+    color: #6b7280;
     cursor: pointer;
     transition: all 0.2s;
 
