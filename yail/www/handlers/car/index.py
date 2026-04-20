@@ -298,17 +298,27 @@ async def ocr(image: str, type: str = None, engine: str = None):
 @ResponseBody
 async def import_word(request):
     from .import_word import parse_word_table
+    from lib.logger import LOG_INFO, LOG_WARNING
 
     try:
-        files = request.multipart.get("file")
-        if not files:
+        LOG_INFO(f"[import_word] 开始处理导入请求")
+        post_data = await request.post()
+        if "file" not in post_data:
+            LOG_WARNING("[import_word] 未找到文件")
             return {"success": False, "message": "请选择文件"}
 
-        file_data = await files.read()
+        file_item = post_data["file"]
+        file_data = file_item.file.read()
+        file_name = getattr(file_item, 'filename', 'unknown.docx')
+        LOG_INFO(f"[import_word] 文件: {file_name}, 大小: {len(file_data)} bytes")
 
-        valid_rows, error_rows = parse_word_table(file_data)
+        valid_rows, error_rows = parse_word_table(file_data, file_name)
+        LOG_INFO(f"[import_word] 解析结果: valid={len(valid_rows)}, error={len(error_rows)}")
+        for i, row in enumerate(valid_rows[:5]):
+            LOG_INFO(f"[import_word] 第{i+1}行: name={row['name']}, carNo={row['carNo']}")
 
         if not valid_rows:
+            LOG_WARNING("[import_word] 未找到有效数据")
             return {
                 "success": False,
                 "message": "未找到有效的车辆数据",
@@ -328,18 +338,24 @@ async def import_word(request):
                     abbr="批量导入"
                 )
                 added += 1
+                LOG_INFO(f"[import_word] 添加成功: {row['name']}, {row['carNo']}")
             except Exception as e:
                 error_rows.append({'row': -1, 'message': f"{row['name']}: {str(e)}"})
+                LOG_WARNING(f"[import_word] 添加失败: {row['name']}, 错误: {str(e)}")
 
-        return {
+        result = {
             "success": True,
             "total": len(valid_rows) + len(error_rows),
             "added": added,
             "failed": len(error_rows),
             "errors": error_rows
         }
+        LOG_INFO(f"[import_word] 导入完成: total={result['total']}, added={added}, failed={len(error_rows)}")
+        return result
 
     except ValueError as e:
+        LOG_WARNING(f"[import_word] ValueError: {str(e)}")
         return {"success": False, "message": str(e)}
     except Exception as e:
+        LOG_WARNING(f"[import_word] Exception: {str(e)}")
         return {"success": False, "message": f"导入失败: {str(e)}"}

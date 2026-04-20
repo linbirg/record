@@ -13,13 +13,13 @@
         action="#"
         :auto-upload="false"
         :limit="1"
-        accept=".docx"
+        accept=".doc,.docx"
         :on-change="handleFileChange"
         :file-list="fileList"
       >
         <i class="el-icon-upload"></i>
         <div class="el-upload__text">将 Word 文档拖到此处，或<em>点击上传</em></div>
-        <div class="el-upload__tip" slot="tip">只能上传 .docx 文件</div>
+        <div class="el-upload__tip" slot="tip">只能上传 .doc 或 .docx 文件</div>
       </el-upload>
     </div>
 
@@ -84,6 +84,14 @@ export default {
       this.fileList = []
     },
     handleFileChange(file, files) {
+      const ext = file.name.split('.').pop().toLowerCase()
+      if (ext !== 'doc' && ext !== 'docx') {
+        this.$message.error('只支持 .doc 或 .docx 格式文件')
+        files.pop()
+        this.selectedFile = null
+        this.fileList = []
+        return
+      }
       this.selectedFile = file.raw
       this.fileList = files.slice(-1)
     },
