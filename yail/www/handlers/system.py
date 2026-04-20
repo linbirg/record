@@ -1,5 +1,5 @@
 # -*- coding: utf-8 -*-
-from lib.yeab import route, post, ResponseBody
+from lib.yeab.web import post, ResponseBody
 from conf.dev import ENABLE_BATCH_IMPORT
 
 
