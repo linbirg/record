@@ -43,6 +43,24 @@
         </svg>
         <span>新增车辆</span>
       </button>
+      <button
+        class="add-btn"
+        @click="openImportDialog">
+        <svg
+          viewBox="0 0 24 24"
+          fill="none"
+          stroke="currentColor"
+          stroke-width="2">
+          <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" />
+          <polyline points="17 8 12 3 7 8" />
+          <line
+            x1="12"
+            y1="3"
+            x2="12"
+            y2="15" />
+        </svg>
+        <span>批量导入</span>
+      </button>
     </div>
 
     <!-- 车辆列表网格 -->
@@ -374,17 +392,24 @@
           fetchCarList();
         " />
     </el-dialog>
+
+    <!-- 批量导入弹窗 -->
+    <ImportWordDialog
+      ref="importWordDialog"
+      @imported="loadCars" />
   </div>
 </template>
 
 <script>
   import { mapActions } from "vuex";
   import CarRegistration from "./CarRegistration.vue";
+  import ImportWordDialog from "./ImportWordDialog.vue";
 
   export default {
     name: "CarList",
     components: {
       CarRegistration,
+      ImportWordDialog,
     },
     data() {
       return {
@@ -580,6 +605,10 @@
         if (this.currentCar) {
           this.$emit("navigate", "detail", this.currentCar.no);
         }
+      },
+
+      openImportDialog() {
+        this.$refs.importWordDialog.open();
       },
 
       showAddDialog() {

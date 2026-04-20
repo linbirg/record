@@ -292,3 +292,54 @@ async def ocr(image: str, type: str = None, engine: str = None):
         error_msg = traceback.format_exc()
         logger.LOG_WARNING("OCR failed: %s\n%s", str(e), error_msg)
         raise web.HTTPInternalServerError(text="OCR failed: " + str(e))
+
+
+@post("/car/import_word")
+@ResponseBody
+async def import_word(request):
+    from .import_word import parse_word_table
+
+    try:
+        files = request.multipart.get("file")
+        if not files:
+            return {"success": False, "message": "请选择文件"}
+
+        file_data = await files.read()
+
+        valid_rows, error_rows = parse_word_table(file_data)
+
+        if not valid_rows:
+            return {
+                "success": False,
+                "message": "未找到有效的车辆数据",
+                "errors": error_rows
+            }
+
+        added = 0
+        for row in valid_rows:
+            try:
+                await CarInfo.add(
+                    name=row['name'],
+                    carNo=row['carNo'],
+                    dept="",
+                    brand="",
+                    carLicense="",
+                    license="",
+                    abbr="批量导入"
+                )
+                added += 1
+            except Exception as e:
+                error_rows.append({'row': -1, 'message': f"{row['name']}: {str(e)}"})
+
+        return {
+            "success": True,
+            "total": len(valid_rows) + len(error_rows),
+            "added": added,
+            "failed": len(error_rows),
+            "errors": error_rows
+        }
+
+    except ValueError as e:
+        return {"success": False, "message": str(e)}
+    except Exception as e:
+        return {"success": False, "message": f"导入失败: {str(e)}"}

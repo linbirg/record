@@ -26,3 +26,17 @@ class CarInfo(AutoIdModel):
 
         rows = await cls.find_where(where, *args_val)
         return rows
+
+    @classmethod
+    async def add(cls, name: str, carNo: str, dept: str = "", brand: str = "",
+                 carLicense: str = "", license: str = "", abbr: str = ""):
+        car = cls()
+        car.name = name
+        car.carNo = carNo
+        car.dept = dept
+        car.brand = brand
+        car.carLicense = carLicense
+        car.license = license
+        car.abbr = abbr
+        await car.save()
+        return car
