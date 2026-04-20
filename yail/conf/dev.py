@@ -51,4 +51,4 @@ TOOL_SCHEMA_CACHE = {}
 MESSAGE_DEDUP_ENABLED = True
 
 # === 功能开关 ===
-ENABLE_BATCH_IMPORT = True  # 批量导入Word功能开关
+ENABLE_BATCH_IMPORT = False  # 批量导入Word功能开关
