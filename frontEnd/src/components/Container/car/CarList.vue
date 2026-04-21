@@ -22,62 +22,64 @@
           class="search-input"
           @input="handleSearch" />
       </div>
-      <button
-        class="add-btn"
-        @click="showAddDialog">
-        <svg
-          viewBox="0 0 24 24"
-          fill="none"
-          stroke="currentColor"
-          stroke-width="2">
-          <line
-            x1="12"
-            y1="5"
-            x2="12"
-            y2="19" />
-          <line
-            x1="5"
-            y1="12"
-            x2="19"
-            y2="12" />
-        </svg>
-        <span>新增车辆</span>
-      </button>
-      <button
-        v-if="batchImportEnabled"
-        class="add-btn"
-        @click="openImportDialog">
-        <svg
-          viewBox="0 0 24 24"
-          fill="none"
-          stroke="currentColor"
-          stroke-width="2">
-          <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" />
-          <polyline points="17 8 12 3 7 8" />
-          <line
-            x1="12"
-            y1="3"
-            x2="12"
-            y2="15" />
-        </svg>
-        <span>批量导入</span>
-      </button>
-      <button
-        class="icon-btn"
-        @click="openHistoryDialog"
-        title="历史记录">
-        <svg
-          viewBox="0 0 24 24"
-          fill="none"
-          stroke="currentColor"
-          stroke-width="2">
-          <circle
-            cx="12"
-            cy="12"
-            r="10" />
-          <polyline points="12 6 12 12 16 14" />
-        </svg>
-      </button>
+      <div class="button-group">
+        <button
+          v-if="batchImportEnabled"
+          class="add-btn"
+          @click="openImportDialog">
+          <svg
+            viewBox="0 0 24 24"
+            fill="none"
+            stroke="currentColor"
+            stroke-width="2">
+            <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" />
+            <polyline points="17 8 12 3 7 8" />
+            <line
+              x1="12"
+              y1="3"
+              x2="12"
+              y2="15" />
+          </svg>
+          <span>批量导入</span>
+        </button>
+        <button
+          class="icon-btn"
+          @click="showAddDialog"
+          title="新增车辆">
+          <svg
+            viewBox="0 0 24 24"
+            fill="none"
+            stroke="currentColor"
+            stroke-width="2">
+            <line
+              x1="12"
+              y1="5"
+              x2="12"
+              y2="19" />
+            <line
+              x1="5"
+              y1="12"
+              x2="19"
+              y2="12" />
+          </svg>
+        </button>
+        <button
+          class="icon-btn"
+          @click="openHistoryDialog"
+          title="历史记录">
+          <svg
+            viewBox="0 0 24 24"
+            fill="none"
+            stroke="currentColor"
+            stroke-width="2">
+            <circle
+              cx="12"
+              cy="12"
+              r="10" />
+            <polyline points="12 6 12 12 16 14" />
+          </svg>
+        </button>
+      </div>
     </div>
 
     <!-- 车辆列表网格 -->
@@ -268,13 +270,19 @@
             <el-upload
               class="doc-uploader"
               action="#"
-              :auto-upload="true"
-              :http-request="handleUploadFile"
+              :auto-upload="false"
+              :on-change="handleUploadFile"
               :show-file-list="false"
               accept="image/jpeg,image/png,image/jpg">
               <el-button type="primary">选择文件</el-button>
             </el-upload>
             <el-button @click="docDialogVisible = false">取消</el-button>
+          </div>
+          
+          <div v-if="pendingFile" class="doc-pending-confirm">
+            <span class="pending-file-name">已选: {{ pendingFileName }}</span>
+            <el-button type="primary" size="small" @click="confirmUpload">确定上传</el-button>
+            <el-button size="small" @click="cancelUpload">取消</el-button>
           </div>
         </div>
       </div>
@@ -446,8 +454,10 @@
         isAdd: true,
         currentCar: null,
         docImages: [],
-        docName: "关系证明",
+        docName: "驾驶证",
         customDocName: "",
+        pendingFile: null,
+        pendingFileName: "",
         deleteConfirmVisible: false,
         deleteTargetFile: null,
         batchImportEnabled: false,
@@ -592,24 +602,37 @@
         return `${this.currentCar.name}_${this.getDateString()}_${docName}.jpg`;
       },
 
-      handleUploadFile(item) {
-        const file = item.file;
+      handleUploadFile(file, fileList) {
+        this.pendingFile = file.raw;
+        this.pendingFileName = file.name;
+      },
+
+      confirmUpload() {
+        if (!this.pendingFile) return;
+
         const fileName = this.generateFileName();
         const formData = new FormData();
-        formData.append("file", file);
+        formData.append("file", this.pendingFile);
         formData.append("no", this.currentCar.no);
         formData.append("filename", fileName);
 
         this.post({ url: "car/pic/upload", data: formData })
           .then(() => {
             this.$message.success("上传成功");
-            this.docName = "证件01";
+            this.pendingFile = null;
+            this.pendingFileName = "";
+            this.docName = "驾驶证";
             this.customDocName = "";
             this.loadDocImages(this.currentCar.no);
           })
           .catch(() => {
             this.$message.error("上传失败");
           });
+      },
+
+      cancelUpload() {
+        this.pendingFile = null;
+        this.pendingFileName = "";
       },
 
       confirmDelete(img) {
@@ -755,6 +778,12 @@
     max-width: 1200px;
     margin-left: auto;
     margin-right: auto;
+  }
+
+  .button-group {
+    display: flex;
+    align-items: center;
+    gap: 8px;
   }
 
   .search-input-wrapper {
@@ -1153,6 +1182,23 @@
 
     .doc-uploader {
       display: inline-block;
+    }
+
+    .doc-pending-confirm {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      padding: 12px;
+      margin-top: 10px;
+      background: #f0f9eb;
+      border-radius: 4px;
+      border: 1px solid #e1f3d8;
+
+      .pending-file-name {
+        flex: 1;
+        color: #606266;
+        font-size: 14px;
+      }
     }
   }
 

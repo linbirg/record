@@ -42,8 +42,10 @@ class CarInfo(AutoIdModel):
         return car
 
     async def save_to_history(self):
-        """保存当前记录到历史表"""
-        from www.dao.car_history import CarInfoHistory
+        """保存当前记录到历史表（含图片）"""
+        from www.dao.car_history import CarInfoHistory, CarInfoHistoryPics
+        from www.dao.car_pics import CarPics
+        import datetime
 
         history = CarInfoHistory()
         history.original_id = self.no
@@ -54,4 +56,13 @@ class CarInfo(AutoIdModel):
         history.car_license = self.carLicense
         history.license = self.license
         history.abbr = self.abbr
+        history.deleted_at = datetime.datetime.now().isoformat()
         await history.save()
+
+        pics = await CarPics.find(carID=self.no)
+        for pic in pics:
+            history_pic = CarInfoHistoryPics()
+            history_pic.history_id = history.id
+            history_pic.path = pic.path
+            history_pic.created_at = pic.created_at
+            await history_pic.save()
