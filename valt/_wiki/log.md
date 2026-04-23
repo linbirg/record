@@ -1,5 +1,13 @@
 # Wiki Log
 
+## 2026-04-23
+
+### ingest
+
+- [ingest] sources/ai-agents/kimi-agent-task-platform-2026-04-23.md (from Kimi)
+
+---
+
 ## 2026-04-10
 
 ### ingest

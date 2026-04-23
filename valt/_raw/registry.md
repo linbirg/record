@@ -14,3 +14,5 @@ description: 追踪 Raw Sources 编译状态
 | sources/ai-agents/claude-code-12-harness-patterns.md | compiled | 2026-04-10 | 2026-04-10 |
 | sources/design/ai-chat-webflow/ai_chat_reasoning_analysis.md | compiled | 2026-04-10 | 2026-04-10 |
 | sources/design/ai-chat-webflow/ai_chat_context_update_design.md | compiled | 2026-04-10 | 2026-04-10 |
+| sources/ai-agents/kimi-agent-task-platform-2026-04-23.md | pending | 2026-04-23 | - |
+
